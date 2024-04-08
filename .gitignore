@@ -2,3 +2,5 @@
 !matrix.cc
 !matrix.hpp
 matrix
+.DS_Store
+*.dSYM/
