@@ -8,7 +8,6 @@ namespace matrix {
     template <typename T>       // T = {int, double, float}
     class Matrix{
         private:
-
             T** data = nullptr;
             int cols_, rows_;
 
@@ -61,7 +60,7 @@ namespace matrix {
                     std::copy(rhs.data[i], rhs.data[i] + rows_, data[i]);
                 }
 
-                return *this;       // ?
+                return *this;
             }
 
             Matrix& operator=(Matrix&& rhs){
@@ -71,14 +70,22 @@ namespace matrix {
 
                 if(&rhs == this) return *this;
 
-                cols_ = rhs.cols_;
-                rows_ = rhs.rows_;
-
-                for(int i = 0; i < cols_; ++i){
-                    std::swap(data[i], rhs.data[i]);
+                if(cols_ != rhs.cols_ || rows_ != rhs.rows_) {
+                    std::cout << "Matrices are incompatible." << std::endl;
+                    abort();
                 }
 
+                std::swap(data, rhs.data);
+
                 return *this;
+            }
+
+            Matrix(Matrix&& rhs) : cols_(rhs.cols_), rows_(rhs.rows_), data(rhs.data) {
+                #ifdef DEBUG_
+                std::cout << "Move ctor" << std::endl;
+                #endif
+
+                rhs.data = nullptr;
             }
 
 
@@ -169,14 +176,16 @@ namespace matrix {
             }
 
             ~Matrix() {
-                for(int i = 0; i < cols_; ++i){
-                    delete [] data[i];
-                }
-                delete [] data;
-
                 #ifdef DEBUG_
                 std::cout << "Matrix dtor" << std::endl;
                 #endif
+
+                if(data != nullptr){
+                    for(int i = 0; i < cols_; ++i){
+                        delete [] data[i];
+                    }
+                    delete [] data;
+                }
             }
     };
 

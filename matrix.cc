@@ -6,23 +6,22 @@ int main(int argc, char** argv){
 
     // g++ -std=c++17 -DDEBUG_ -fsanitize=address,bool,bounds matrix.cc -o matrix
 
-    Matrix<int> m1eye = Matrix<int>::eye(8);
-    Matrix<int> m2eye = Matrix<int>::eye(8);
+    /*
+        TODO:
+        1) Add func for generating matrix with given det()
 
-    Matrix<int> m3 = Matrix<int>::Matrix_add(m1eye, m2eye);
+    */
 
-    Matrix<int> m4(m3);
-    Matrix<int> m5 = m3;
+    Matrix<int> m1eye = Matrix<int>::eye(8);    // iterator ctor
+    Matrix<int> m2eye = Matrix<int>::eye(8);    // iterator ctor
 
-    const Matrix<int> m10 = Matrix<int>::eye(10);
+    Matrix<int> m3 = m1eye; // Copy ctor
 
-    m4 = std::move(m10);
+    Matrix<int> m4(std::move(m3));      // Move ctor
+    Matrix<int> m5 = std::move(m1eye);  // Move ctor
+    m5 = std::move(m4);                 // Move assign
 
-    m4.print();
-
-    m1eye.print();
-
-    std::cout << m1eye.cols() << std::endl;
+    m5.print();
 
     return 0;
 }
