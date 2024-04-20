@@ -10,6 +10,14 @@ int main(int argc, char** argv){
         TODO:
         1) Add func for generating matrix with given det()
 
+        Способы генерации матрицы с заданным определителем:
+        1) Перестановка строк - опредитель меняет знак
+        2) Умножение строки на число - определитель умножается на это число
+        3) Прибавление к одной строке другой, умноженной на число - определитель не поменяется
+        4) Перемножение двух квадратных матрицы - определители перемножатся
+        5) Определитель верхнетреугольной матрицы равен произведению диагональных элементов
+        6) Транспонирование - определитель не меняется
+
     */
 
     Matrix<int> m1eye = Matrix<int>::eye(8);    // iterator ctor
@@ -22,6 +30,39 @@ int main(int argc, char** argv){
     m5 = std::move(m4);                 // Move assign
 
     m5.print();
+
+    m5.add_columns(0, 1);
+
+    m5.print();
+
+    m5.negate();
+
+    m5.print();
+
+    m5[1][0] = 3;
+    m5[1][1] = 3;
+    m5[1][2] = 3;
+    m5[1][3] = 3;
+    m5[1][4] = 3;
+    m5[1][5] = 3;
+
+    m5.print();
+
+    m5.print_row(1);
+
+    Matrix<int> m5_ = m5;
+
+    m5.transpose();
+
+    m5.print();
+
+    m5.print_row(1);
+
+    int trc_ = m5.trace();
+
+    std::cout << "trace: " << trc_ << std::endl;
+
+    std::cout << "eq : " << m5.equal(m5_) << " " << m5.equal(m4) << std::endl;
 
     return 0;
 }
