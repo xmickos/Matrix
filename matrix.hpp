@@ -2,6 +2,7 @@
 #include<iostream>
 #include<cstdlib>
 #include<algorithm>
+#include<cstdlib>
 
 namespace matrix {
 
@@ -10,6 +11,7 @@ namespace matrix {
         private:
             T** data = nullptr;
             int cols_, rows_;
+            int actions_count = 4;
 
             struct ProxyRow {
                 T* row;
@@ -187,6 +189,68 @@ namespace matrix {
                 transpose();
                 multiply_row(j_, multiplier);
                 transpose();
+            }
+
+            static Matrix upper_triangular(std::vector<T> vec_) {       // to be refactored
+                Matrix<T> m_(vec_.size(), vec_.size(), static_cast<T>(0));
+
+                for(int i = 0; i < m_.cols_; ++i){
+                    m_[i][i] = vec_[i];
+                }
+
+                for(int i = 0; i < m_.cols_; ++i){
+                    for(int j = i + 1; j < m_.rows_; ++j){
+                        m_[i][j] = static_cast<T>(1);
+                    }
+                }
+
+                return m_;
+            }
+
+            static Matrix upper_triangular(const T& det_, int cols) {       // to be refactored
+                Matrix<T> m_ = eye(cols);
+
+                int rand_pos = std::rand() % cols;
+                m_[rand_pos][rand_pos] = det_;
+
+                for(int i = 0; i < m_.cols_; ++i){
+                    for(int j = i + 1; j < m_.rows_; ++j){
+                        m_[i][j] = static_cast<T>(1);
+                    }
+                }
+
+                return m_;
+            }
+
+            void shuffle_det() {        // to be refactored
+                std::vector<int> actions(cols_ * 2);
+
+                for(auto it = actions.begin(), et = actions.end(); it != et; ++it){
+                    *it = std::rand() % actions_count;
+                }
+
+                for(auto it = actions.begin(), et = actions.end(); it != et; ++it){
+                    switch(*it){
+                    case 1:
+                        transpose();
+                        break;
+                    case 2:
+                        swap_columns(std::rand() % cols_, std::rand() % rows_);
+                        swap_rows(std::rand() % rows_, std::rand() % rows_);
+                        break;
+                    case 3:
+                        add_rows(std::rand() % rows_, std::rand() % rows_);
+                        break;
+                    case 4:
+                        add_columns(std::rand() % cols_, std::rand() % cols_);
+                        break;
+                    }
+                }
+
+            }
+
+            T calculate_det() const {       // to be continued
+
             }
 
             void print() const noexcept {   // to be refactored

@@ -64,5 +64,16 @@ int main(int argc, char** argv){
 
     std::cout << "eq : " << m5.equal(m5_) << " " << m5.equal(m4) << std::endl;
 
+
+    Matrix<int> mat_ = Matrix<int>::upper_triangular(42, 50);
+
+    mat_.print();
+
+    mat_.shuffle_det();
+    mat_.shuffle_det();
+    mat_.shuffle_det();
+
+    mat_.print();
+
     return 0;
 }
