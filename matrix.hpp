@@ -6,12 +6,19 @@
 
 namespace matrix {
 
+    template <typename T> class Matrix;
+
+    template <typename T>
+    struct lpu_decomposition{
+        Matrix<T> L, U;
+    };
+
     template <typename T>       // T = {int, double, float}
     class Matrix{
         private:
             T** data = nullptr;
             int cols_, rows_;
-            int actions_count = 4;
+            const int rand_actions_count = 4;
 
             struct ProxyRow {
                 T* row;
@@ -43,7 +50,7 @@ namespace matrix {
                 int* seq_ = new int[sz_ * sz_]{};
 
                 for(int i = 0; i < sz_; ++i){
-                    seq_[ i * (sz_ + 1) ] = (T)1.;
+                    seq_[ i * (sz_ + 1) ] = static_cast<T>(1);
                 }
 
                 Matrix<T> m(sz_, sz_, seq_, seq_ + sz_ * sz_);
@@ -167,7 +174,7 @@ namespace matrix {
                 transpose();
             }
 
-            void add_rows(int i_, int j_) {
+            void add_rows(int i_, int j_) {     // to be refactored
                 for(int j = 0; j < rows_; ++j){
                     data[i_][j] += data[j_][j];
                 }
@@ -215,42 +222,107 @@ namespace matrix {
 
                 for(int i = 0; i < m_.cols_; ++i){
                     for(int j = i + 1; j < m_.rows_; ++j){
-                        m_[i][j] = static_cast<T>(1);
+                        m_[i][j] = static_cast<T>(std::rand() % 10);
                     }
                 }
 
                 return m_;
             }
 
-            void shuffle_det() {        // to be refactored
+            void shuffle() {        // to be refactored
                 std::vector<int> actions(cols_ * 2);
+                int row_ind;
+                int col_ind = std::rand() % cols_;
 
                 for(auto it = actions.begin(), et = actions.end(); it != et; ++it){
-                    *it = std::rand() % actions_count;
+                    *it = std::rand() % rand_actions_count;
                 }
 
                 for(auto it = actions.begin(), et = actions.end(); it != et; ++it){
+                    row_ind = std::rand() % cols_;
+                    col_ind = std::rand() % cols_;
+                    if(row_ind == col_ind){ row_ind = (row_ind + 1) % cols_; }
                     switch(*it){
                     case 1:
                         transpose();
                         break;
                     case 2:
-                        swap_columns(std::rand() % cols_, std::rand() % rows_);
-                        swap_rows(std::rand() % rows_, std::rand() % rows_);
+                        swap_columns(col_ind, row_ind);
+                        swap_rows(row_ind, col_ind);
                         break;
                     case 3:
-                        add_rows(std::rand() % rows_, std::rand() % rows_);
+                        add_rows(col_ind, row_ind);
                         break;
                     case 4:
-                        add_columns(std::rand() % cols_, std::rand() % cols_);
+                        add_columns(col_ind, row_ind);
                         break;
                     }
                 }
 
             }
 
-            T calculate_det() const {       // to be continued
 
+            T calculate_det() const {       // to be continued
+                if(cols_ != rows_){
+                    std::cout << "Given matrix is not square." << std::endl;
+                    abort();
+                }
+                if(cols_ == 2){
+                    return data[0][0] * data[1][1] - data[1][0] * data[0][1];
+                }
+
+                lpu_decomposition<float> lpu = lpu_decompose();
+
+                T det = lpu.L.triangle_det() * lpu.U.triangle_det();
+
+                return static_cast<T>(det);
+            }
+
+            lpu_decomposition<float> lpu_decompose() const {
+
+                for(int i = 0; i < cols_; ++i){
+                    for(int j = 0; j < rows_; ++j){
+                        static_cast<float>(data[i][j]);
+                    }
+                }
+
+                Matrix<float> l = Matrix<float>::eye(cols_);
+                Matrix<float> u = Matrix<float>::eye(cols_);
+
+                for(int i = 0; i < cols_; ++i){
+                    u[i][i] = data[i][i];
+
+                    for(int j = i + 1; j < rows_; ++j){
+                        l[j][i] = data[j][i] / u[i][i];
+                        u[i][j] = data[i][j];
+                    }
+
+                    for(int j = i + 1; j < rows_; ++j){
+                        for(int k = i + 1; k < rows_; ++k){
+                            data[j][k] = data[j][k] - l[j][i] * u[i][k];
+                        }
+                    }
+                }
+
+                #ifdef DEBUG_
+                std::cout << "L:" << std::endl;
+                l.print();
+                std::cout << "U:" << std::endl;
+                u.print();
+                #endif
+
+                return lpu_decomposition<float>{l, u};
+
+            }
+
+            T triangle_det() const {        // to be refactored
+                T det = static_cast<T>(1);
+
+                for(int i = 0; i < cols_; ++i) {
+                    det *= data[i][i];
+                }
+
+                return det;
             }
 
             void print() const noexcept {   // to be refactored
@@ -367,6 +439,5 @@ namespace matrix {
                 }
             }
     };
-
 
 }
