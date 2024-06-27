@@ -4,6 +4,8 @@
 #include<algorithm>
 #include<cstdlib>
 #include<execution>
+#include<climits>
+#include<cstdlib>
 #include<cmath>
 
 namespace matrix {
@@ -99,6 +101,10 @@ namespace matrix {
                 #endif
             }
 
+            static Matrix zeros_like(const Matrix<T>& m){
+                return zeros(m.cols_, m.rows_);
+            }
+
             static Matrix Matrix_add(Matrix<T>& m1, Matrix<T>& m2){
                 if(m1.cols_ != m2.cols_ || m1.rows_ != m2.rows_){
                     std::cout << "Matrices are incompatible." << std::endl;
@@ -186,15 +192,15 @@ namespace matrix {
                 transpose();
             }
 
-            void add_rows(int i_, int j_) {     // to be refactored
+            void add_rows(int i_, int j_, const T& coefficient) {     // to be refactored
                 for(int j = 0; j < rows_; ++j){
-                    data[i_][j] += data[j_][j];
+                    data[i_][j] += data[j_][j] * coefficient;
                 }
             }
 
-            void add_columns(int i_, int j_) {
+            void add_columns(int i_, int j_, const T& coefficient) {
                 transpose();
-                add_rows(i_, j_);
+                add_rows(i_, j_, coefficient);
                 transpose();
             }
 
@@ -208,6 +214,32 @@ namespace matrix {
                 transpose();
                 multiply_row(j_, multiplier);
                 transpose();
+            }
+
+            static Matrix multiply(const Matrix& A, const Matrix& B) {
+                // Multiplies A * B and stores result in B
+                // A [M x N] * B [N x K]
+
+                Matrix<T> C = zeros_like(A);
+
+                int M = A.cols_, N = A.rows_, K = B.rows_;
+
+                for(int i = 0; i < M; i++){
+                    for(int j = 0; j < K; j++){
+                        for(int k = 0; k < N; k++){
+                            C[i][j] += A[i][k] * B[k][j];
+                        }
+                    }
+                }
+
+                std::cout << "print\nA:\n";
+                A.print();
+                std::cout << "\nB:\n";
+                B.print();
+                std::cout << "C:\n";
+                C.print();
+
+                return C;
             }
 
             static Matrix upper_triangular(std::vector<T> vec_) {       // to be refactored
@@ -263,119 +295,161 @@ namespace matrix {
                         swap_rows(row_ind, col_ind);
                         break;
                     case 3:
-                        add_rows(col_ind, row_ind);
+                        add_rows(col_ind, row_ind, 1);
                         break;
                     case 4:
-                        add_columns(col_ind, row_ind);
+                        add_columns(col_ind, row_ind, 1);
                         break;
                     }
                 }
-
             }
 
+            Matrix<int> get_mu(const Matrix& A){
+                Matrix<int> mu = zeros(A.rows_, A.cols_);
+
+                for(int i = 0; i < A.cols_; i++){
+                    for(int j = i + 1; j < A.rows_; j++){
+                        mu[i][j] = A[i][j];
+                    }
+                }
+
+                for(int i = 0; i < A.cols_; i++){
+                    for(int j = i + 1; j < A.rows_; j++){
+                        mu[i][i] -= A[j][j];
+                    }
+                }
+                mu[cols_ - 1][cols_ - 1] = 0;
+
+                return mu;
+            }
+
+            Matrix<int> det_bird(){
+                Matrix<int> mu = zeros(rows_, cols_);
+                Matrix<int> A = *this;
+                Matrix<int> Fn = A;
+
+                for(int n = 1; n < rows_; n++){
+                    mu = get_mu(Fn);
+                    Fn = multiply(mu, A);
+                    std::cout << "\nnow Fn:\n";
+                    Fn.print();
+                }
+
+                return Fn;
+            }
+
+            long calculate_det_int() {
+                if(cols_ != rows_){
+                    std::cout << "Given matrix is not square." << std::endl;
+                    abort();
+                }
+
+                if(cols_ == 2){
+                    return data[0][0] * data[1][1] - data[1][0] * data[0][1];
+                }
+
+
+                for(int k = 0; k < cols_ - 1; ++k){
+                    for(int i = k + 1; i < cols_; ++i){
+                        for(int j = k + 1; j < cols_; ++j){
+                            data[i][j] = data[i][j] * data[k][k] - data[i][k] * data[k][j];
+                            // if(std::abs(data[i][j]) > LONG_MAX / 2){
+                            //     std::cout << "overflowing!\n";
+                            //     std::cout << "k, i, j = " << k << ", " << i << ", " << j << std::endl;
+                            //     abort();
+                            // }
+                            if(k > 0){
+                                data[i][j] /= data[k - 1][k - 1];
+                            }
+                        }
+                    }
+                }
+
+                // std::cout << "done:\n";
+                // python_print();
+
+                return data[cols_ - 1][cols_ - 1];
+            }
 
             T calculate_det() const {       // to be continued
-                const double float_tolerance = 1e-10;
+                const long double float_tolerance = 1e-15;
 
                 if(cols_ != rows_){
                     std::cout << "Given matrix is not square." << std::endl;
                     abort();
                 }
+
                 if(cols_ == 2){
                     return data[0][0] * data[1][1] - data[1][0] * data[0][1];
                 }
 
-                lpu_decomposition<double> lpu = lpu_decompose();
+                lpu_decomposition<long double> lpu = lpu_decompose();
 
-                double det = lpu.L.triangle_det() * lpu.U.triangle_det();
+                long double det = lpu.L.triangle_det() * lpu.U.triangle_det();
+
                 if(lpu.sign) det *= -1.0;
 
                 int det_sign = det > 0 ? 1 : -1;
 
-                std::cout << "pre-final det: " << det << std::endl;
-                if(det - static_cast<T>(det) > float_tolerance){
+                if(det - static_cast<T>(det) > 0.5){
                     det += 1.0 * det_sign;
                 }
 
                 return static_cast<T>(det);
             }
 
-            lpu_decomposition<double> lpu_decompose() const {
+            lpu_decomposition<long double> lpu_decompose() const {
                 int permutations_count = 0;
-                const double float_tolerance = 1e-10;
+                const long double float_tolerance = 1e-20;
 
-                Matrix<double> U = *this;
-                Matrix<double> L = Matrix<double>::eye(cols_);
+                Matrix<long double> U = *this;
+                Matrix<long double> L = Matrix<long double>::eye(cols_);
 
                 for(int i = 0; i < cols_ - 1; ++i){
 
                     if(std::fabs(U[i][i]) < float_tolerance){
-
-                        std::cout << "U[" << i << "][" << i << "] = " << U[i][i] << std::endl;
 
                         int trash_finded = 0;
                         // найти ненулевой элемент в столбце, поменять строки местами, докинуть +1 в счётчик
                         // перестановок
 
                         for(int k = i + 1; k < rows_; ++k){                 // refactor -> std::find_if
-                            if(std::fabs(U[k][i]) < float_tolerance){
-
-                                std::cout << "data[" << i << "][" << i << "] == " << data[i][i] << std::endl;
-                                std::cout << "before permutating " << i << " <–> " << k << ":\n";
-                                U.print();
-
+                            if(std::fabs(U[k][i]) > float_tolerance){
                                 U.swap_rows(i, k);
 
                                 trash_finded = 1;
-
-                                std::cout << "\nafter:\n";
-                                U.print();
-                                std::cout << " now U[" << i << "][" << i << "] == " << U[i][i] << std::endl;
-
                                 permutations_count++;
                                 break;
                             }
                         }
 
                         if(trash_finded == 0){
-                            std::cout << "here\n";
+                            std::cout << "det is 0.\n";
 
-                            return lpu_decomposition<double>{
-                                Matrix<double>::zeros(U.cols(), U.rows()), Matrix<double>::zeros(L.cols(), L.rows()), 0
+                            return lpu_decomposition<long double>{
+                                Matrix<long double>::zeros(U.cols(), U.rows()),
+                                Matrix<long double>::zeros(L.cols(), L.rows()),
+                                0
                             };
                         }
                     }
 
                     for(int j = i + 1; j < rows_; ++j){
-
                         L[j][i] = U[j][i] / U[i][i];
-
-                        std::cout << "L[" << j << "][" << i << "] = " << L[j][i] << " = " << U[j][i] << " / "
-                            << U[i][i] << "\n";
-
-                        for(int k = 0; k < rows_; ++k){
-                            U[j][k] -= L[j][i] * U[i][k];
-                        }
-                        std::cout << std::endl;
-
+                        U.add_rows(j, i, -L[j][i]);
                     }
-
-                    std::cout << "Current U:" << std::endl;
-                    U.print();
-
                 }
 
-                std::cout << permutations_count << " permutations\n";
+                // std::cout << permutations_count << " permutations\n";
 
+                // #ifdef DEBUG_
+                // std::cout << "Final L:" << std::endl;
+                // L.python_print();
+                // std::cout << "Final U:" << std::endl;
+                // U.python_print();
+                // #endif
 
-                #ifdef DEBUG_
-                std::cout << "L:" << std::endl;
-                L.print();
-                std::cout << "U:" << std::endl;
-                U.print();
-                #endif
-
-                return lpu_decomposition<double>{L, U, static_cast<bool>(permutations_count % 2)};
+                return lpu_decomposition<long double>{L, U, static_cast<bool>(permutations_count % 2)};
 
             }
 
@@ -396,10 +470,44 @@ namespace matrix {
 
                 for(int i = 0; i < cols_; ++i){
                     for(int j = 0; j < rows_; ++j){
+                        #ifndef PYTHON_DEBUG
+                        if(i == j) std::cout << '[';
+                        #endif
                         std::cout << data[i][j] << " ";
+                        #ifndef PYTHON_DEBUG
+                        if(i == j) std::cout << ']';
+                        #endif
                     }
                     std::cout << std::endl;
                 }
+            }
+
+            void python_print() const noexcept {   // to be refactored
+                #ifdef DEBUG_
+                std::cout << "Matrix output" << std::endl;
+                #endif
+
+                std::cout << "[";
+                for(int i = 0; i < cols_ - 1; ++i){
+                    std::cout << "[";
+                    for(int j = 0; j < rows_ - 1; ++j){
+                        #ifndef PYTHON_DEBUG
+                        if(i == j) std::cout << '[';
+                        #endif
+                        std::cout << data[i][j];
+                        #ifndef PYTHON_DEBUG
+                        if(i == j) std::cout << ']';
+                        #endif
+                        std::cout << ", ";
+                    }
+                    std::cout << data[i][rows_ - 1] << "]," << std::endl;
+                }
+
+                std::cout << "[";
+                for(int j = 0; j < rows_ - 1; ++j){
+                    std::cout << data[cols_ - 1][j] << ", ";
+                }
+                std::cout << data[cols_ - 1][rows_ - 1] << "] ]" << std::endl;
             }
 
             void print_row(int i) const {
@@ -417,14 +525,16 @@ namespace matrix {
                 return rows_;
             }
 
-            operator Matrix<double>() const {                    // many questions... to be refactored
+            operator Matrix<long double>() const {                    // many questions... to be refactored
+                #ifdef DEBUG_
                 std::cout << "Implicit user-defined convertion to Matrix<double>" << std::endl;
+                #endif
 
-                Matrix<double> m_ = Matrix<double>::eye(cols_);
+                Matrix<long double> m_ = Matrix<long double>::eye(cols_);
 
                 for(int i = 0; i < cols_; ++i){
                     for(int j = 0; j < rows_; ++j){
-                        m_[i][j] = static_cast<double>(data[i][j]);
+                        m_[i][j] = static_cast<long double>(data[i][j]);
                     }
                 }
 
