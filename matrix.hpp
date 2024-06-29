@@ -114,9 +114,10 @@ namespace matrix {
                 Matrix<T> m_out(m1.cols_, m1.rows_);
 
                 for(int i = 0; i < m1.cols_; ++i){
-                    for(int j = 0; j < m1.rows_; ++j){
-                        m_out.data[i][j] = m1.data[i][j] + m2.data[i][j];
-                    }
+                    std::transform(
+                        m1.data[i], m1.data[i] + m1.rows_, m2.data[i],
+                        m_out.data[i], [](const T& a, const T& b){ return a + b; }
+                    );
                 }
 
                 return m_out;
@@ -145,37 +146,32 @@ namespace matrix {
                 return trace_;
             }
 
-            bool equal(const Matrix& other) const {         // to be refactored
+            bool equal(const Matrix& other) const {
                 for(int i = 0; i < cols_; ++i){
-                    for(int j = 0; j < rows_; ++j){
-                        if(data[i][j] != other.data[i][j]) { return false; }
-                    }
+                    if(!std::equal(data[i], data[i] + cols_, other.data[i])){ return false; }
                 }
 
                 return true;
             }
 
-            bool less(const Matrix& other) const {         // to be refactored
+            bool less(const Matrix& other) const {
                 for(int i = 0; i < cols_; ++i){
-                    for(int j = 0; j < rows_; ++j){
-                        if(data[i][j] >= other.data[i][j]) { return false; }
-                    }
+                    if(!std::equal(
+                        data[i], data[i] + cols_, other.data[i], [&](const T& a, const T& b){ return a < b; }
+                    )){ return false; }
                 }
 
                 return true;
             }
 
-            Matrix& negate() & { // to be refactored
+            Matrix& negate() & {
                 for(int i = 0; i < cols_; ++i){
-                    for(int j = 0; j < rows_; ++j){
-                        data[i][j] = -data[i][j];
-                    }
+                    std::transform(data[i], data[i] + cols_, data[i], [](const T& x){ return -x; });
                 }
-
                 return *this;
             }
 
-            Matrix& transpose() & { // to be refactored
+            Matrix& transpose() & {
 
                 for(int i = 0; i < cols_; ++i){
                     for(int j = 0; j <= i; ++j){
@@ -192,7 +188,7 @@ namespace matrix {
                 transpose();
             }
 
-            void add_rows(int i_, int j_, const T& coefficient) {     // to be refactored
+            void add_rows(int i_, int j_, const T& coefficient = static_cast<T>(1)) {
                 for(int j = 0; j < rows_; ++j){
                     data[i_][j] += data[j_][j] * coefficient;
                 }
@@ -204,10 +200,8 @@ namespace matrix {
                 transpose();
             }
 
-            void multiply_row(int i_, const T& multiplier){
-                for(int j = 0; j < rows_; ++j){
-                    data[i_][j] *= multiplier;
-                }
+            void multiply_row(int i, const T& multiplier){
+                std::transform(data[i], data[i] + rows_, data[i], [&](const T& arg){ return arg * multiplier; });
             }
 
             void multipliy_column(int j_, const T& multiplier){
@@ -232,12 +226,14 @@ namespace matrix {
                     }
                 }
 
+                #ifdef DEBUG_
                 std::cout << "print\nA:\n";
                 A.print();
                 std::cout << "\nB:\n";
                 B.print();
                 std::cout << "C:\n";
                 C.print();
+                #endif
 
                 return C;
             }
@@ -423,6 +419,8 @@ namespace matrix {
                             }
                         }
 
+
+
                         if(trash_finded == 0){
                             std::cout << "det is 0.\n";
 
@@ -453,8 +451,8 @@ namespace matrix {
 
             }
 
-            double triangle_det() const {        // to be refactored
-                double det = 1.0;
+            T triangle_det() const {
+                T det = 1.0;
 
                 for(int i = 0; i < cols_; ++i) {
                     det *= data[i][i];
@@ -463,7 +461,7 @@ namespace matrix {
                 return det;
             }
 
-            void print() const noexcept {   // to be refactored
+            void print() const noexcept {
                 #ifdef DEBUG_
                 std::cout << "Matrix output" << std::endl;
                 #endif
@@ -482,7 +480,7 @@ namespace matrix {
                 }
             }
 
-            void python_print() const noexcept {   // to be refactored
+            void python_print() const noexcept {
                 #ifdef DEBUG_
                 std::cout << "Matrix output" << std::endl;
                 #endif
@@ -525,7 +523,7 @@ namespace matrix {
                 return rows_;
             }
 
-            operator Matrix<long double>() const {                    // many questions... to be refactored
+            operator Matrix<long double>() const {
                 #ifdef DEBUG_
                 std::cout << "Implicit user-defined convertion to Matrix<double>" << std::endl;
                 #endif
@@ -541,7 +539,7 @@ namespace matrix {
                 return m_;
             }
 
-            ProxyRow operator[](int i){         // RVO here ?..
+            ProxyRow operator[](int i){
                 ProxyRow row{data[i]};
                 return row;
             }
