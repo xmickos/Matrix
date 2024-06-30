@@ -188,25 +188,25 @@ namespace matrix {
                 transpose();
             }
 
-            void add_rows(int i_, int j_, const T& coefficient = static_cast<T>(1)) {
-                for(int j = 0; j < rows_; ++j){
-                    data[i_][j] += data[j_][j] * coefficient;
-                }
+            void add_rows(int i, int j, const T& coefficient = static_cast<T>(1)) {
+                auto f = [&](const T& x, const T& y){ return x + y * coefficient; };
+                std::transform(data[i], data[i] + rows_, data[j], data[i], f);
             }
 
-            void add_columns(int i_, int j_, const T& coefficient) {
+            void add_columns(int i, int j, const T& coefficient) {
                 transpose();
-                add_rows(i_, j_, coefficient);
+                add_rows(i, j, coefficient);
                 transpose();
             }
 
-            void multiply_row(int i, const T& multiplier){
-                std::transform(data[i], data[i] + rows_, data[i], [&](const T& arg){ return arg * multiplier; });
+            void multiply_row(int i, const T& multiplier) {
+                auto f = [&](const T& arg){ return arg * multiplier; };
+                std::transform(data[i], data[i] + rows_, data[i], f);
             }
 
-            void multipliy_column(int j_, const T& multiplier){
+            void multipliy_column(int j, const T& multiplier) {
                 transpose();
-                multiply_row(j_, multiplier);
+                multiply_row(j, multiplier);
                 transpose();
             }
 
@@ -261,11 +261,8 @@ namespace matrix {
                 m_[rand_pos][rand_pos] = det_;
 
                 for(int i = 0; i < m_.cols_; ++i){
-                    for(int j = i + 1; j < m_.rows_; ++j){
-                        m_[i][j] = static_cast<T>(std::rand() % 10);
-                    }
+                    std::generate(m_[i] + i + 1, m_[i] + m_.rows_, [](){ return static_cast<T>(std::rand() % 10); });
                 }
-
                 return m_;
             }
 
@@ -349,20 +346,12 @@ namespace matrix {
                     for(int i = k + 1; i < cols_; ++i){
                         for(int j = k + 1; j < cols_; ++j){
                             data[i][j] = data[i][j] * data[k][k] - data[i][k] * data[k][j];
-                            // if(std::abs(data[i][j]) > LONG_MAX / 2){
-                            //     std::cout << "overflowing!\n";
-                            //     std::cout << "k, i, j = " << k << ", " << i << ", " << j << std::endl;
-                            //     abort();
-                            // }
                             if(k > 0){
                                 data[i][j] /= data[k - 1][k - 1];
                             }
                         }
                     }
                 }
-
-                // std::cout << "done:\n";
-                // python_print();
 
                 return data[cols_ - 1][cols_ - 1];
             }
