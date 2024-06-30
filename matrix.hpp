@@ -297,7 +297,7 @@ namespace matrix {
                 }
             }
 
-            Matrix<int> get_mu(const Matrix& A){
+            Matrix<int> get_mu(const Matrix& A) const {
                 Matrix<int> mu = zeros(A.rows_, A.cols_);
 
                 for(int i = 0; i < A.cols_; i++){
@@ -316,45 +316,21 @@ namespace matrix {
                 return mu;
             }
 
-            Matrix<int> det_bird(){
-                Matrix<int> mu = zeros(rows_, cols_);
-                Matrix<int> A = *this;
-                Matrix<int> Fn = A;
+//             Matrix<int> det_bird(){
+//                 Matrix<int> mu = zeros(rows_, cols_);
+//                 Matrix<int> A = *this;
+//                 Matrix<int> Fn = A;
+//
+//                 for(int n = 1; n < rows_; n++){
+//                     mu = get_mu(Fn);
+//                     Fn = multiply(mu, A);
+//                     std::cout << "\nnow Fn:\n";
+//                     Fn.print();
+//                 }
+//
+//                 return Fn;
+//             }
 
-                for(int n = 1; n < rows_; n++){
-                    mu = get_mu(Fn);
-                    Fn = multiply(mu, A);
-                    std::cout << "\nnow Fn:\n";
-                    Fn.print();
-                }
-
-                return Fn;
-            }
-
-            long calculate_det_int() {
-                if(cols_ != rows_){
-                    std::cout << "Given matrix is not square." << std::endl;
-                    abort();
-                }
-
-                if(cols_ == 2){
-                    return data[0][0] * data[1][1] - data[1][0] * data[0][1];
-                }
-
-
-                for(int k = 0; k < cols_ - 1; ++k){
-                    for(int i = k + 1; i < cols_; ++i){
-                        for(int j = k + 1; j < cols_; ++j){
-                            data[i][j] = data[i][j] * data[k][k] - data[i][k] * data[k][j];
-                            if(k > 0){
-                                data[i][j] /= data[k - 1][k - 1];
-                            }
-                        }
-                    }
-                }
-
-                return data[cols_ - 1][cols_ - 1];
-            }
 
             T calculate_det() const {       // to be continued
                 const long double float_tolerance = 1e-15;
@@ -427,14 +403,16 @@ namespace matrix {
                     }
                 }
 
-                // std::cout << permutations_count << " permutations\n";
+                #if 0
+                std::cout << permutations_count << " permutations\n";
 
-                // #ifdef DEBUG_
-                // std::cout << "Final L:" << std::endl;
-                // L.python_print();
-                // std::cout << "Final U:" << std::endl;
-                // U.python_print();
-                // #endif
+                #ifdef DEBUG_
+                std::cout << "Final L:" << std::endl;
+                L.python_print();
+                std::cout << "Final U:" << std::endl;
+                U.python_print();
+                #endif
+                #endif
 
                 return lpu_decomposition<long double>{L, U, static_cast<bool>(permutations_count % 2)};
 
@@ -615,4 +593,19 @@ namespace matrix {
             }
     };
 
+}
+
+template <> int matrix::Matrix<int>::calculate_det() const {
+    matrix::Matrix<int> mu = zeros(rows_, cols_);
+    matrix::Matrix<int> A = *this;
+    matrix::Matrix<int> Fn = A;
+
+    for(int n = 1; n < rows_; n++){
+        mu = get_mu(Fn);
+        Fn = multiply(mu, A);
+        std::cout << "\nnow Fn:\n";
+        Fn.print();
+    }
+
+    return Fn[0][0];
 }
