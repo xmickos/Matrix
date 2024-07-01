@@ -7,6 +7,7 @@
 #include<climits>
 #include<cstdlib>
 #include<cmath>
+#include<numeric>
 
 namespace matrix {
 
@@ -155,10 +156,10 @@ namespace matrix {
             }
 
             bool less(const Matrix& other) const {
+                auto f = [&](const T& a, const T& b){ return a < b; };
+
                 for(int i = 0; i < cols_; ++i){
-                    if(!std::equal(
-                        data[i], data[i] + cols_, other.data[i], [&](const T& a, const T& b){ return a < b; }
-                    )){ return false; }
+                    if(!std::equal(data[i], data[i] + cols_, other.data[i], f)){ return false; }
                 }
 
                 return true;
@@ -168,6 +169,7 @@ namespace matrix {
                 for(int i = 0; i < cols_; ++i){
                     std::transform(data[i], data[i] + cols_, data[i], [](const T& x){ return -x; });
                 }
+
                 return *this;
             }
 
@@ -204,7 +206,7 @@ namespace matrix {
                 std::transform(data[i], data[i] + rows_, data[i], f);
             }
 
-            void multipliy_column(int j, const T& multiplier) {
+            void multiply_column(int j, const T& multiplier) {
                 transpose();
                 multiply_row(j, multiplier);
                 transpose();
@@ -218,6 +220,7 @@ namespace matrix {
 
                 int M = A.cols_, N = A.rows_, K = B.rows_;
 
+                #ifdef TRIVIAL_MATMUL
                 for(int i = 0; i < M; i++){
                     for(int j = 0; j < K; j++){
                         for(int k = 0; k < N; k++){
@@ -225,7 +228,32 @@ namespace matrix {
                         }
                     }
                 }
+                #endif
 
+                #ifdef REVERSED_TRIVIAL_MATMUL
+                for(int i = 0; i < M; i++){
+                    for(int k = 0; k < N; k++){
+                        for(int j = 0; j < K; j++){
+                            C[i][j] += A[i][k] * B[k][j];
+                        }
+                    }
+                }
+                #endif
+
+                #ifdef TRANSF_MATMUL
+                std::vector<T> fixed_col(K);
+
+                for(int i = 0; i < B.cols_; ++i){
+                    for(int q = 0; q < B.rows_; ++q){
+                        fixed_col[q] = B[q][i];
+                    }
+                    for(int j = 0; j < A.rows_; ++j){
+                        C[j][i] = std::transform_reduce(A[j].row, A[j].row + A.cols_, fixed_col.begin(), static_cast<T>(0));
+                    }
+                }
+                #endif
+
+                #if 0
                 #ifdef DEBUG_
                 std::cout << "print\nA:\n";
                 A.print();
@@ -233,6 +261,7 @@ namespace matrix {
                 B.print();
                 std::cout << "C:\n";
                 C.print();
+                #endif
                 #endif
 
                 return C;
@@ -261,7 +290,7 @@ namespace matrix {
                 m_[rand_pos][rand_pos] = det_;
 
                 for(int i = 0; i < m_.cols_; ++i){
-                    std::generate(m_[i] + i + 1, m_[i] + m_.rows_, [](){ return static_cast<T>(std::rand() % 10); });
+                    std::generate(m_[i].row + i + 1, m_[i].row + m_.rows_, [](){ return static_cast<T>(std::rand() % 10); });
                 }
                 return m_;
             }
@@ -301,9 +330,7 @@ namespace matrix {
                 Matrix<int> mu = zeros(A.rows_, A.cols_);
 
                 for(int i = 0; i < A.cols_; i++){
-                    for(int j = i + 1; j < A.rows_; j++){
-                        mu[i][j] = A[i][j];
-                    }
+                    std::copy(A[i].row, A[i].row + i + 1, mu[i].row);
                 }
 
                 for(int i = 0; i < A.cols_; i++){
@@ -316,24 +343,12 @@ namespace matrix {
                 return mu;
             }
 
-//             Matrix<int> det_bird(){
-//                 Matrix<int> mu = zeros(rows_, cols_);
-//                 Matrix<int> A = *this;
-//                 Matrix<int> Fn = A;
-//
-//                 for(int n = 1; n < rows_; n++){
-//                     mu = get_mu(Fn);
-//                     Fn = multiply(mu, A);
-//                     std::cout << "\nnow Fn:\n";
-//                     Fn.print();
-//                 }
-//
-//                 return Fn;
-//             }
-
-
             T calculate_det() const {       // to be continued
                 const long double float_tolerance = 1e-15;
+
+                #ifdef DEBUG_
+                    std::cout << "General algorithm" << std::endl;
+                #endif
 
                 if(cols_ != rows_){
                     std::cout << "Given matrix is not square." << std::endl;
@@ -438,7 +453,9 @@ namespace matrix {
                         #ifndef PYTHON_DEBUG
                         if(i == j) std::cout << '[';
                         #endif
+
                         std::cout << data[i][j] << " ";
+
                         #ifndef PYTHON_DEBUG
                         if(i == j) std::cout << ']';
                         #endif
@@ -455,23 +472,29 @@ namespace matrix {
                 std::cout << "[";
                 for(int i = 0; i < cols_ - 1; ++i){
                     std::cout << "[";
+
                     for(int j = 0; j < rows_ - 1; ++j){
                         #ifndef PYTHON_DEBUG
                         if(i == j) std::cout << '[';
                         #endif
+
                         std::cout << data[i][j];
+
                         #ifndef PYTHON_DEBUG
                         if(i == j) std::cout << ']';
                         #endif
+
                         std::cout << ", ";
                     }
                     std::cout << data[i][rows_ - 1] << "]," << std::endl;
                 }
 
                 std::cout << "[";
+
                 for(int j = 0; j < rows_ - 1; ++j){
                     std::cout << data[cols_ - 1][j] << ", ";
                 }
+
                 std::cout << data[cols_ - 1][rows_ - 1] << "] ]" << std::endl;
             }
 
@@ -596,15 +619,16 @@ namespace matrix {
 }
 
 template <> int matrix::Matrix<int>::calculate_det() const {
-    matrix::Matrix<int> mu = zeros(rows_, cols_);
+    #ifdef DEBUG_
+        std::cout << "Specialized for int's algorithm" << std::endl;
+    #endif
+
     matrix::Matrix<int> A = *this;
     matrix::Matrix<int> Fn = A;
 
     for(int n = 1; n < rows_; n++){
-        mu = get_mu(Fn);
+        const matrix::Matrix<int>& mu = get_mu(Fn);
         Fn = multiply(mu, A);
-        std::cout << "\nnow Fn:\n";
-        Fn.print();
     }
 
     return Fn[0][0];

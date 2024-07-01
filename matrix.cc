@@ -4,7 +4,7 @@
 
 using namespace matrix;
 
-int main(int argc, char** argv){
+int main(int argc, char** argv) {
 
     // g++ -std=c++17 -DDEBUG_ -fsanitize=address,bool,bounds matrix.cc -o matrix
 
@@ -26,7 +26,7 @@ int main(int argc, char** argv){
 //     std::cout << "total goods: " << goods;
 
 
-//     Matrix<int> mat_ = Matrix<int>::upper_triangular(15, 100);
+//     Matrix<int> mat_ = Matrix<int>::upper_triangular(15, 19);
 //
 //
 //     std::cout << "Init matrix:" << std::endl;
@@ -39,10 +39,9 @@ int main(int argc, char** argv){
 //     mat_.python_print();
 //
 //     clock_t start = clock();
-//     Matrix<int> Fn = mat_.det_bird();
+//     int det = mat_.calculate_det();
 //     clock_t stop = clock();
-//     std::cout << "Det: " << std::endl;
-//     Fn.print();
+//     std::cout << "Det: " << det << std::endl;
 //
 //
 //     std::cout << double(stop - start) / CLOCKS_PER_SEC << " secs \n";
@@ -54,8 +53,10 @@ int main(int argc, char** argv){
 //
 //     Fn.print();
 
+// ––Multiplication speed test––
+
 //     std::ofstream output;
-//     output.open("multiplication_02.txt");
+//     output.open("multiplication_02_reversed_classic.txt");
 //     std::vector<int> vec(100 * 100);
 //
 //     for(int i = 0; i < 100 * 100; i++){
@@ -71,13 +72,21 @@ int main(int argc, char** argv){
 //         output << i << ", " << double(stop - start) / CLOCKS_PER_SEC << std::endl;
 //     }
 
-    std::vector<int> v = {0, 0, 0, 0};
-    std::vector<int> w = {1, 1, 1, 1};
+    // ––Multiplication single test––
+
+    std::vector<int> v = {1, 2, 0, 1};
+    std::vector<int> w = {1, 2, 3, 4};
+    std::vector<int> q = {7, 10, 3, 4};
     Matrix<int> A(2, 2, v.begin(), v.end());
     Matrix<int> B(2, 2, w.begin(), w.end());
+    Matrix<int> C_true(2, 2, q.begin(), q.end());
 
     B.negate();
     B.print();
+    B.negate();
+    Matrix<int> C = Matrix<int>::multiply(A, B);
+    C.print();
+    std::cout << std::endl << "Equality: " << C.equal(C_true) << std::endl;
 
 
     return 0;
