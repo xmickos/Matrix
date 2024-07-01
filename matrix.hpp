@@ -619,6 +619,10 @@ namespace matrix {
 }
 
 template <> int matrix::Matrix<int>::calculate_det() const {
+    // Original paper:
+    // (1,2) Bird, R. S. (2011). A simple division-free algorithm for computing determinants. Inf. Process. Lett., 111(21), 1072-1074.
+    // doi: 10.1016/j.ipl.2011.08.006 –
+
     #ifdef DEBUG_
         std::cout << "Specialized for int's algorithm" << std::endl;
     #endif
