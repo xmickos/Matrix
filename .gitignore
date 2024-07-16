@@ -4,3 +4,5 @@
 matrix
 .DS_Store
 *.dSYM/
+build/
+netlibfiles.zip

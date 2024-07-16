@@ -9,6 +9,8 @@
 #include<cmath>
 #include<numeric>
 
+#pragma once
+
 namespace matrix {
 
     template <typename T> class Matrix;
@@ -19,7 +21,13 @@ namespace matrix {
         bool sign = false;
     };
 
-    template <typename T>       // T = {int, char, double}
+    template <typename T>
+    struct max_elem_vec{
+        T max_{};
+        int maxcol = 0, maxrow = 0;
+    };
+
+    template <typename T>
     class Matrix{
         private:
             T** data = nullptr;
@@ -36,36 +44,47 @@ namespace matrix {
         public:
 
             Matrix(int cls, int rws, T val = T{}) : cols_(cls), rows_(rws) {
-                data = new T*[cols_];
-                for(int i = 0; i < cols_; ++i){
-                    data[i] = new T[rows_];
-                    std::fill_n(data[i], rows_, val);
-                }
-
                 #ifdef DEBUG_
                 std::cout << "Matrix base ctor" << std::endl;
                 #endif
+
+                if(cols_ > 0 && rows_ > 0){
+                    data = new T*[cols_];
+                    for(int i = 0; i < cols_; ++i){
+                        data[i] = new T[rows_];
+                        std::fill_n(data[i], rows_, val);
+                    }
+                }else{
+                    std::cout << "Wrong cls / rws params." << std::endl;
+                    abort();
+                }
             }
 
             static Matrix eye(int sz_) {
-                if(sz_ <= 0){
-                    std::cout << "Matrix size must be positive integer." << std::endl;
+                #ifdef DEBUG_
+                std::cout << "Matrix eye ctor" << std::endl;
+                #endif
+                if(sz_ > 0){
+                    int* seq_ = new int[sz_ * sz_]{};
+
+                    for(int i = 0; i < sz_; ++i){
+                        seq_[ i * (sz_ + 1) ] = static_cast<T>(1);
+                    }
+
+                    Matrix<T> m(sz_, sz_, seq_, seq_ + sz_ * sz_);
+                    delete[] seq_;
+
+                    return m;
+                }else{
+                    std::cout << "Wrong sz_ param." << std::endl;
                     abort();
                 }
-
-                int* seq_ = new int[sz_ * sz_]{};
-
-                for(int i = 0; i < sz_; ++i){
-                    seq_[ i * (sz_ + 1) ] = static_cast<T>(1);
-                }
-
-                Matrix<T> m(sz_, sz_, seq_, seq_ + sz_ * sz_);
-                delete[] seq_;
-
-                return m;
             }
 
             static Matrix zeros(int cols, int rows) {
+                #ifdef DEBUG_
+                std::cout << "Matrix zeros ctor" << std::endl;
+                #endif
                 int* seq_ = new int [cols * rows]{};
 
                 Matrix<T> m(cols, rows, seq_, seq_ + cols * rows);
@@ -76,6 +95,10 @@ namespace matrix {
 
             template<typename Iterator>
             Matrix(int cls, int rws, Iterator it, Iterator et) : cols_(cls), rows_(rws) {
+                #ifdef DEBUG_
+                std::cout << "Matrix iterator ctor" << std::endl;
+                #endif
+
                 if(cols_ <= 0 || rows_ <= 0){
                     std::cout << "Matrix sizes must be positive integers." << std::endl;
                     abort();
@@ -96,10 +119,6 @@ namespace matrix {
                     std::copy(it, std::next(it, rows_), data[i]);
                     it = std::next(it, rows_);
                 }
-
-                #ifdef DEBUG_
-                std::cout << "Matrix iterator ctor" << std::endl;
-                #endif
             }
 
             static Matrix zeros_like(const Matrix<T>& m){
@@ -124,7 +143,7 @@ namespace matrix {
                 return m_out;
             }
 
-            void swap_rows(int index1, int index2 ) {
+            bool swap_rows(int index1, int index2 ) {
                 if(index1 > rows_) {
                     std::cout << "index1 is out of matrix rows range." << std::endl;
                     abort();
@@ -134,7 +153,11 @@ namespace matrix {
                     abort();
                 }
 
+                if(index1 == index2) { return false; }
+
                 std::swap(data[index1], data[index2]);
+
+                return true;
             }
 
             T trace() const {
@@ -184,10 +207,12 @@ namespace matrix {
                 return *this;
             }
 
-            void swap_columns(int i, int j) {
+            bool swap_columns(int i, int j) {
                 transpose();
-                swap_rows(i, j);
+                bool ret = swap_rows(i, j);
                 transpose();
+
+                return ret;
             }
 
             void add_rows(int i, int j, const T& coefficient = static_cast<T>(1)) {
@@ -213,8 +238,8 @@ namespace matrix {
             }
 
             static Matrix multiply(const Matrix& A, const Matrix& B) {
-                // Multiplies A * B and stores result in B
-                // A [M x N] * B [N x K]
+                // Multiplies A * B and stores result in C
+                // A [M x N] * B [N x K] = C [M x K]
 
                 Matrix<T> C = zeros_like(A);
 
@@ -241,6 +266,7 @@ namespace matrix {
                 #endif
 
                 #ifdef TRANSF_MATMUL
+                std::cout << "TRANSF_MATMUL is used" << std::endl;
                 std::vector<T> fixed_col(K);
 
                 for(int i = 0; i < B.cols_; ++i){
@@ -253,21 +279,10 @@ namespace matrix {
                 }
                 #endif
 
-                #if 0
-                #ifdef DEBUG_
-                std::cout << "print\nA:\n";
-                A.print();
-                std::cout << "\nB:\n";
-                B.print();
-                std::cout << "C:\n";
-                C.print();
-                #endif
-                #endif
-
                 return C;
             }
 
-            static Matrix upper_triangular(std::vector<T> vec_) {       // to be refactored
+            static Matrix upper_triangular(std::vector<T> vec_) {
                 Matrix<T> m_(vec_.size(), vec_.size(), static_cast<T>(0));
 
                 for(int i = 0; i < m_.cols_; ++i){
@@ -283,7 +298,7 @@ namespace matrix {
                 return m_;
             }
 
-            static Matrix upper_triangular(const T& det_, int cols) {       // to be refactored
+            static Matrix upper_triangular(int cols, const T& det_) {
                 Matrix<T> m_ = eye(cols);
 
                 int rand_pos = std::rand() % cols;
@@ -295,20 +310,22 @@ namespace matrix {
                 return m_;
             }
 
-            void shuffle() {        // to be refactored
+            void shuffle() {
+                if(cols_ * rows_ == 1) { return; }
+
                 std::vector<int> actions(cols_ * 2);
                 int row_ind;
                 int col_ind = std::rand() % cols_;
 
-                for(auto it = actions.begin(), et = actions.end(); it != et; ++it){
-                    *it = std::rand() % rand_actions_count;
+                for(auto&& action : actions){
+                    action = std::rand() % rand_actions_count;
                 }
 
-                for(auto it = actions.begin(), et = actions.end(); it != et; ++it){
+                for(auto&& action : actions){
                     row_ind = std::rand() % cols_;
                     col_ind = std::rand() % cols_;
                     if(row_ind == col_ind){ row_ind = (row_ind + 1) % cols_; }
-                    switch(*it){
+                    switch(action){
                     case 1:
                         transpose();
                         break;
@@ -326,11 +343,11 @@ namespace matrix {
                 }
             }
 
-            Matrix<int> get_mu(const Matrix& A) const {
-                Matrix<int> mu = zeros(A.rows_, A.cols_);
+            Matrix<T> get_mu(const Matrix& A) const {
+                Matrix<T> mu = zeros(A.rows_, A.cols_);
 
-                for(int i = 0; i < A.cols_; i++){
-                    std::copy(A[i].row, A[i].row + i + 1, mu[i].row);
+                for(int i = 0; i < A.cols_; ++i){
+                    std::copy(A[i].row + i + 1, A[i].row + A.cols_, mu[i].row + i + 1);
                 }
 
                 for(int i = 0; i < A.cols_; i++){
@@ -343,7 +360,33 @@ namespace matrix {
                 return mu;
             }
 
-            T calculate_det() const {       // to be continued
+            T inplace_bareiss_det() {
+                if(cols_ != rows_){
+                    std::cout << "Given matrix is not square." << std::endl;
+                    abort();
+                }
+
+                if(cols_ == 2){
+                    return data[0][0] * data[1][1] - data[1][0] * data[0][1];
+                }
+
+                for(int k = 0; k < cols_ - 1; ++k){
+                    for(int i = k + 1; i < cols_; ++i){
+                        for(int j = k + 1; j < cols_; ++j){
+                            data[i][j] = data[k][k] * data[i][j] - data[k][j] * data[i][k];
+                            if(k > 0) {
+
+                                data[i][j] /= data[k - 1][k - 1];
+
+                            }
+                        }
+                    }
+                }
+
+                return data[cols_ - 1][rows_ - 1];
+            }
+
+            T calculate_det() const {
                 const long double float_tolerance = 1e-15;
 
                 #ifdef DEBUG_
@@ -355,55 +398,93 @@ namespace matrix {
                     abort();
                 }
 
+                if(cols_ == 1){ return data[0][0]; }
+
                 if(cols_ == 2){
                     return data[0][0] * data[1][1] - data[1][0] * data[0][1];
                 }
 
-                lpu_decomposition<long double> lpu = lpu_decompose();
-
-                long double det = lpu.L.triangle_det() * lpu.U.triangle_det();
-
+                lpu_decomposition<long double> lpu = lpu_decompose_max();
+                T det = lpu.L.triangle_det() * lpu.U.triangle_det();
                 if(lpu.sign) det *= -1.0;
-
-                int det_sign = det > 0 ? 1 : -1;
-
-                if(det - static_cast<T>(det) > 0.5){
-                    det += 1.0 * det_sign;
-                }
 
                 return static_cast<T>(det);
             }
 
-            lpu_decomposition<long double> lpu_decompose() const {
+            private:
+
+            max_elem_vec<long double> max_elem(Matrix<long double>& m, int border_index) const {
+                max_elem_vec<long double> max_vec{m[border_index][border_index], border_index, border_index};
+
+                for(int i = border_index; i < m.cols(); ++i){
+                    auto [row_min, row_max] = std::minmax_element(m[i].row + border_index, m[i].row + m.cols());
+                    if(std::fabs(*row_min) > std::fabs(max_vec.max_)){
+                        max_vec.max_ = *row_min;
+                        max_vec.maxcol = std::distance(m[i].row, row_min);
+                        max_vec.maxrow = i;
+                    }
+                    if(std::fabs(*row_max) > std::fabs(max_vec.max_)){
+                        max_vec.max_ = *row_max;
+                        max_vec.maxcol = std::distance(m[i].row, row_max);
+                        max_vec.maxrow = i;
+                    }
+                }
+                return max_vec;
+            }
+
+
+            lpu_decomposition<long double> lpu_decompose_max() const {
                 int permutations_count = 0;
-                const long double float_tolerance = 1e-20;
+                const double float_tolerance = 1e-15;
 
                 Matrix<long double> U = *this;
                 Matrix<long double> L = Matrix<long double>::eye(cols_);
 
                 for(int i = 0; i < cols_ - 1; ++i){
+                    max_elem_vec<long double> max = max_elem(U, i);
+
+                    if(std::fabs(max.max_) < float_tolerance){
+                        return lpu_decomposition<long double>{
+                            Matrix<double>::zeros(U.cols(), U.rows()),
+                            Matrix<double>::zeros(L.cols(), L.rows()),
+                            0
+                        };
+                    }
+
+                    permutations_count += U.swap_rows(i, max.maxrow);
+                    permutations_count += U.swap_columns(i, max.maxcol);
+                    for(int j = i + 1; j < rows_; ++j){
+                        L[j][i] = U[j][i] / U[i][i];
+                        U.add_rows(j, i, -L[j][i]);
+                    }
+                }
+
+                return lpu_decomposition<long double>{L, U, static_cast<bool>(permutations_count % 2)};
+            }
+
+            lpu_decomposition<long double> lpu_decompose() const {
+                int permutations_count = 0;
+                const long double float_tolerance = 1e-10;
+
+                Matrix<long double> U = *this;
+                Matrix<long double> L = Matrix<long double>::eye(cols_);
+                std::vector<T> row_vec(rows_);
+
+                for(int i = 0; i < cols_ - 1; ++i){
 
                     if(std::fabs(U[i][i]) < float_tolerance){
 
-                        int trash_finded = 0;
-                        // найти ненулевой элемент в столбце, поменять строки местами, докинуть +1 в счётчик
-                        // перестановок
-
-                        for(int k = i + 1; k < rows_; ++k){                 // refactor -> std::find_if
-                            if(std::fabs(U[k][i]) > float_tolerance){
-                                U.swap_rows(i, k);
-
-                                trash_finded = 1;
-                                permutations_count++;
-                                break;
-                            }
+                        for(int q = 0; q < U.rows(); ++q){
+                            row_vec[q] = U[q][i];
                         }
 
+                        auto it = std::max_element(row_vec.begin(), row_vec.end());
 
+                        if(it != row_vec.end()){
+                            U.swap_rows(i, std::distance(row_vec.begin(), it));
+                            permutations_count++;
 
-                        if(trash_finded == 0){
-                            std::cout << "det is 0.\n";
-
+                        } else{
                             return lpu_decomposition<long double>{
                                 Matrix<long double>::zeros(U.cols(), U.rows()),
                                 Matrix<long double>::zeros(L.cols(), L.rows()),
@@ -418,20 +499,10 @@ namespace matrix {
                     }
                 }
 
-                #if 0
-                std::cout << permutations_count << " permutations\n";
-
-                #ifdef DEBUG_
-                std::cout << "Final L:" << std::endl;
-                L.python_print();
-                std::cout << "Final U:" << std::endl;
-                U.python_print();
-                #endif
-                #endif
-
                 return lpu_decomposition<long double>{L, U, static_cast<bool>(permutations_count % 2)};
-
             }
+
+            public:
 
             T triangle_det() const {
                 T det = 1.0;
@@ -450,13 +521,13 @@ namespace matrix {
 
                 for(int i = 0; i < cols_; ++i){
                     for(int j = 0; j < rows_; ++j){
-                        #ifndef PYTHON_DEBUG
+                        #ifndef 0 // for python_debug via sympy
                         if(i == j) std::cout << '[';
                         #endif
 
                         std::cout << data[i][j] << " ";
 
-                        #ifndef PYTHON_DEBUG
+                        #ifndef 0 // for python_debug via sympy
                         if(i == j) std::cout << ']';
                         #endif
                     }
@@ -474,13 +545,13 @@ namespace matrix {
                     std::cout << "[";
 
                     for(int j = 0; j < rows_ - 1; ++j){
-                        #ifndef PYTHON_DEBUG
+                        #ifndef 0 // for python_debug via sympy
                         if(i == j) std::cout << '[';
                         #endif
 
                         std::cout << data[i][j];
 
-                        #ifndef PYTHON_DEBUG
+                        #ifndef 0 // for python debug via sympy
                         if(i == j) std::cout << ']';
                         #endif
 
@@ -499,8 +570,6 @@ namespace matrix {
             }
 
             void print_row(int i) const {
-                std::cout << "row №" << i << ":" << std::endl;
-
                 std::for_each(data[i], data[i] + rows_, [](int elem){ std::cout << elem << " "; });
                 std::cout << std::endl;
             }
@@ -553,6 +622,14 @@ namespace matrix {
                 }
             }
 
+            Matrix(Matrix&& rhs) : cols_(rhs.cols_), rows_(rhs.rows_), data(rhs.data) {
+                #ifdef DEBUG_
+                std::cout << "Move ctor" << std::endl;
+                #endif
+
+                rhs.data = nullptr;
+            }
+
             Matrix& operator=(const Matrix& rhs) {
                 #ifdef DEBUG_
                 std::cout << "Copy assign" << std::endl;
@@ -594,18 +671,7 @@ namespace matrix {
                 return *this;
             }
 
-            Matrix(Matrix&& rhs) : cols_(rhs.cols_), rows_(rhs.rows_), data(rhs.data) {
-                #ifdef DEBUG_
-                std::cout << "Move ctor" << std::endl;
-                #endif
-
-                rhs.data = nullptr;
-            }
-
             ~Matrix() {
-                #ifdef DEBUG_
-                std::cout << "Matrix dtor" << std::endl;
-                #endif
 
                 if(data != nullptr){
                     for(int i = 0; i < cols_; ++i){
@@ -635,5 +701,5 @@ template <> int matrix::Matrix<int>::calculate_det() const {
         Fn = multiply(mu, A);
     }
 
-    return Fn[0][0];
+    return cols_ % 2 == 0 ? -Fn[0][0] : Fn[0][0];
 }

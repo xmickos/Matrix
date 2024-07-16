@@ -1,4 +1,5 @@
-#include"matrix.hpp"
+#include"include/matrix.hpp"
+#undef DEBUG_
 #include<ctime>
 #include<fstream>
 
@@ -6,52 +7,53 @@ using namespace matrix;
 
 int main(int argc, char** argv) {
 
-    // g++ -std=c++17 -DDEBUG_ -fsanitize=address,bool,bounds matrix.cc -o matrix
-
-//     int dets[100][184], goods = 0;
+//     double dets[100][84], goods = 0;
 //
-//     for(int sz = 1; sz < 100; sz++){
-//         for(int det = -42; det < 142; det++){
-//             Matrix<long> mat_ = Matrix<long>::upper_triangular(det, sz);
+//     for(int sz = 25; sz < 100; sz++){
+//         for(int det = -42; det < 42; det++){
+//             Matrix<double> mat_ = Matrix<double>::upper_triangular(det, sz);
 //
 //             mat_.shuffle();
 //             mat_.shuffle();
 //
-//             dets[sz][det] = mat_.calculate_det();
-//             std::cout << "SZ: " << sz << ", DET: " << det << ", calc_det: " << dets[sz][det];
-//             if(dets[sz][det] == det){ std::cout << "\t\t\t\t\t\t\t\t\t+"; goods++; }
+//             dets[sz][det + 42] = mat_.calculate_det();
+//             std::cout << "SZ: " << sz << ", DET: " << det << " vs " << dets[sz][det + 42];
+//             if(std::abs(dets[sz][det + 42] - det) < 1.0){ std::cout << "\t\t\t\t\t\t\t\t\t+"; goods++; }
 //             std::cout << std::endl;
+//             std::cin.get();
 //         }
 //     }
 //     std::cout << "total goods: " << goods;
 
 
-//     Matrix<int> mat_ = Matrix<int>::upper_triangular(15, 19);
-//
-//
-//     std::cout << "Init matrix:" << std::endl;
-//     mat_.python_print();
-//     mat_.shuffle();
-//     mat_.shuffle();
-//     mat_.shuffle();
-//     mat_.shuffle();
-//     std::cout << "Shuffled matrix:" << std::endl;
-//     mat_.python_print();
-//
-//     clock_t start = clock();
-//     int det = mat_.calculate_det();
-//     clock_t stop = clock();
-//     std::cout << "Det: " << det << std::endl;
-//
-//
-//     std::cout << double(stop - start) / CLOCKS_PER_SEC << " secs \n";
+    Matrix<int> mat_ = Matrix<int>::upper_triangular(151, 100);
 
-//   std::vector<int> v = {48, 56, 0, -1, 23, 0, 0, 0, 1};
-//   Matrix<int> A(3, 3, v.begin(), v.end());
 
-//     Matrix<int> Fn = A.det_bird();
+    std::cout << "Init matrix:" << std::endl;
+    // mat_.python_print();
+    mat_.shuffle();
+    mat_.shuffle();
+    mat_.shuffle();
+    mat_.shuffle();
+    std::cout << "Shuffled matrix:" << std::endl;
+    // mat_.python_print();
+
+    clock_t start = clock();
+    int det = mat_.calculate_det();
+    clock_t stop = clock();
+    std::cout << "Det: " << det << std::endl;
+
+
+    std::cout << double(stop - start) / CLOCKS_PER_SEC << " secs \n";
+
+
+
+//     std::vector<int> v = {48, 56, 0, -1, 23, 0, 0, 0, 1};
+//     Matrix<int> A(3, 3, v.begin(), v.end());
+//     std::cout << "init: " << std::endl;
+//     A.print();
 //
-//     Fn.print();
+//     std::cout << "\ndet: " <<  A.calculate_det() << std::endl;
 
 // ––Multiplication speed test––
 
@@ -74,20 +76,31 @@ int main(int argc, char** argv) {
 
     // ––Multiplication single test––
 
-    std::vector<int> v = {1, 2, 0, 1};
-    std::vector<int> w = {1, 2, 3, 4};
-    std::vector<int> q = {7, 10, 3, 4};
-    Matrix<int> A(2, 2, v.begin(), v.end());
-    Matrix<int> B(2, 2, w.begin(), w.end());
-    Matrix<int> C_true(2, 2, q.begin(), q.end());
-
-    B.negate();
-    B.print();
-    B.negate();
-    Matrix<int> C = Matrix<int>::multiply(A, B);
-    C.print();
-    std::cout << std::endl << "Equality: " << C.equal(C_true) << std::endl;
-
+//     std::vector<int> v = {1, 2, 1, 0};
+//     std::vector<int> w = {1, 2, 3, 4};
+//     std::vector<int> q = {7, 10, 1, 2};
+//     Matrix<int> A(2, 2, v.begin(), v.end());
+//     Matrix<int> B(2, 2, w.begin(), w.end());
+//     Matrix<int> C_true(2, 2, q.begin(), q.end());
+//     Matrix<int> copied = Matrix<int>::zeros(2, 2);
+//
+//     A.print();
+//     B.print();
+//     Matrix<int> C = Matrix<int>::multiply(A, B);
+//     C.print();
+//     std::copy(C_true[0].row, C_true[0].row + C_true.cols(), copied[0].row);
+//     std::copy(C_true[1].row, C_true[1].row + C_true.cols() - 1, copied[1].row);
+//
+//     std::cout << std::endl << "Equality: " << C.equal(C_true) << std::endl;
+//     std::cout << std::endl << "Copied: " << std::endl;
+//     copied.print();
+//
+//     ––Multiplication single test––
+//
+//     std::vector<double> v = {2.09, 5.55, 4.93, 0.15, 8, 8.7, 0.87, 8.33, 4.68};
+//     Matrix<double> m(3, 3, v.begin(), v.end());
+//     std::cout.precision(10);
+//     std::cout << m.calculate_det() << std::endl;
 
     return 0;
 }
