@@ -44,10 +44,6 @@ namespace matrix {
         public:
 
             Matrix(int cls, int rws, T val = T{}) : cols_(cls), rows_(rws) {
-                #ifdef DEBUG_
-                std::cout << "Matrix base ctor" << std::endl;
-                #endif
-
                 if(cols_ > 0 && rows_ > 0){
                     data = new T*[cols_];
                     for(int i = 0; i < cols_; ++i){
@@ -61,9 +57,6 @@ namespace matrix {
             }
 
             static Matrix eye(int sz_) {
-                #ifdef DEBUG_
-                std::cout << "Matrix eye ctor" << std::endl;
-                #endif
                 if(sz_ > 0){
                     int* seq_ = new int[sz_ * sz_]{};
 
@@ -82,9 +75,6 @@ namespace matrix {
             }
 
             static Matrix zeros(int cols, int rows) {
-                #ifdef DEBUG_
-                std::cout << "Matrix zeros ctor" << std::endl;
-                #endif
                 int* seq_ = new int [cols * rows]{};
 
                 Matrix<T> m(cols, rows, seq_, seq_ + cols * rows);
@@ -95,10 +85,6 @@ namespace matrix {
 
             template<typename Iterator>
             Matrix(int cls, int rws, Iterator it, Iterator et) : cols_(cls), rows_(rws) {
-                #ifdef DEBUG_
-                std::cout << "Matrix iterator ctor" << std::endl;
-                #endif
-
                 if(cols_ <= 0 || rows_ <= 0){
                     std::cout << "Matrix sizes must be positive integers." << std::endl;
                     abort();
@@ -106,9 +92,6 @@ namespace matrix {
 
                 if(std::distance(it, et) != cols_ * rows_){
                     std::cout << "Wrong sequence length." << std::endl;
-                    #ifdef DEBUG_
-                    std::cout << "Sequence length is " << std::distance(it, et) << std::endl;
-                    #endif
                     abort();
                 }
 
@@ -242,31 +225,7 @@ namespace matrix {
                 // A [M x N] * B [N x K] = C [M x K]
 
                 Matrix<T> C = zeros_like(A);
-
                 int M = A.cols_, N = A.rows_, K = B.rows_;
-
-                #ifdef TRIVIAL_MATMUL
-                for(int i = 0; i < M; i++){
-                    for(int j = 0; j < K; j++){
-                        for(int k = 0; k < N; k++){
-                            C[i][j] += A[i][k] * B[k][j];
-                        }
-                    }
-                }
-                #endif
-
-                #ifdef REVERSED_TRIVIAL_MATMUL
-                for(int i = 0; i < M; i++){
-                    for(int k = 0; k < N; k++){
-                        for(int j = 0; j < K; j++){
-                            C[i][j] += A[i][k] * B[k][j];
-                        }
-                    }
-                }
-                #endif
-
-                #ifdef TRANSF_MATMUL
-                std::cout << "TRANSF_MATMUL is used" << std::endl;
                 std::vector<T> fixed_col(K);
 
                 for(int i = 0; i < B.cols_; ++i){
@@ -277,7 +236,6 @@ namespace matrix {
                         C[j][i] = std::transform_reduce(A[j].row, A[j].row + A.cols_, fixed_col.begin(), static_cast<T>(0));
                     }
                 }
-                #endif
 
                 return C;
             }
@@ -388,10 +346,6 @@ namespace matrix {
 
             T calculate_det() const {
                 const long double float_tolerance = 1e-15;
-
-                #ifdef DEBUG_
-                    std::cout << "General algorithm" << std::endl;
-                #endif
 
                 if(cols_ != rows_){
                     std::cout << "Given matrix is not square." << std::endl;
@@ -515,9 +469,6 @@ namespace matrix {
             }
 
             void print() const noexcept {
-                #ifdef DEBUG_
-                std::cout << "Matrix output" << std::endl;
-                #endif
 
                 for(int i = 0; i < cols_; ++i){
                     for(int j = 0; j < rows_; ++j){
@@ -536,9 +487,6 @@ namespace matrix {
             }
 
             void python_print() const noexcept {
-                #ifdef DEBUG_
-                std::cout << "Matrix output" << std::endl;
-                #endif
 
                 std::cout << "[";
                 for(int i = 0; i < cols_ - 1; ++i){
@@ -583,9 +531,6 @@ namespace matrix {
             }
 
             operator Matrix<long double>() const {
-                #ifdef DEBUG_
-                std::cout << "Implicit user-defined convertion to Matrix<double>" << std::endl;
-                #endif
 
                 Matrix<long double> m_ = Matrix<long double>::eye(cols_);
 
@@ -610,10 +555,6 @@ namespace matrix {
 
             Matrix(const Matrix& rhs) : cols_(rhs.cols_), rows_(rhs.rows_) {
 
-                #ifdef DEBUG_
-                std::cout << "Copy ctor" << std::endl;
-                #endif
-
                 data = new T*[cols_];
 
                 for(int i = 0; i < rhs.cols_; ++i){
@@ -623,18 +564,10 @@ namespace matrix {
             }
 
             Matrix(Matrix&& rhs) : cols_(rhs.cols_), rows_(rhs.rows_), data(rhs.data) {
-                #ifdef DEBUG_
-                std::cout << "Move ctor" << std::endl;
-                #endif
-
                 rhs.data = nullptr;
             }
 
             Matrix& operator=(const Matrix& rhs) {
-                #ifdef DEBUG_
-                std::cout << "Copy assign" << std::endl;
-                #endif
-
                 if(this == &rhs) return *this;
 
                 for(int i = 0; i < cols_; ++i){
@@ -655,10 +588,6 @@ namespace matrix {
             }
 
             Matrix& operator=(Matrix&& rhs){
-                #ifdef DEBUG_
-                std::cout << "Move assign" << std::endl;
-                #endif
-
                 if(&rhs == this) return *this;
 
                 if(cols_ != rhs.cols_ || rows_ != rhs.rows_) {
@@ -688,10 +617,6 @@ template <> int matrix::Matrix<int>::calculate_det() const {
     // Original paper:
     // (1,2) Bird, R. S. (2011). A simple division-free algorithm for computing determinants. Inf. Process. Lett., 111(21), 1072-1074.
     // doi: 10.1016/j.ipl.2011.08.006 –
-
-    #ifdef DEBUG_
-        std::cout << "Specialized for int's algorithm" << std::endl;
-    #endif
 
     matrix::Matrix<int> A = *this;
     matrix::Matrix<int> Fn = A;
