@@ -1,13 +1,12 @@
 #include<iostream>
-#undef DEBUG_
 #include"include/matrix.hpp"
 #include<gtest/gtest.h>
 
 using namespace matrix;
 
-TEST(End2endTests, Integers) {
+TEST(End2endTests, Integers150x150) {
     int true_det = 151;
-    Matrix<int> mat_ = Matrix<int>::upper_triangular(151, 150);
+    Matrix<int> mat_ = Matrix<int>::upper_triangular(150, true_det);
 
     mat_.shuffle();
     mat_.shuffle();
@@ -23,25 +22,23 @@ TEST(End2endTests, Integers) {
     EXPECT_EQ(det, true_det);
 }
 
-TEST(End2endTests, DISABLED_GeneralInteger){
-    double test_det;
+TEST(End2endTests, GeneralInteger){
+    double test_det, trues_count = 0.0;
+    int dets_count = 42;
 
     for(int sz = 1; sz < 50; sz++){
-        std::cout << sz << ": ";
-        if(sz < 10) std::cout << " ";
-        for(int det = -42; det < 42; det++){
-            Matrix<double> mat_ = Matrix<double>::upper_triangular(det, sz);
+        trues_count = 0;
+        for(int det = -dets_count; det < dets_count; det++){
+            Matrix<double> mat_ = Matrix<double>::upper_triangular(sz, det);
 
             mat_.shuffle();
             mat_.shuffle();
 
             test_det = mat_.calculate_det();
-            if(std::abs(test_det - det) < 1.0){ std::cout << "+"; }
-            EXPECT_EQ(test_det, det);
+            if(std::fabs(test_det - det) < 1.0){ trues_count++; }
         }
-        std::cout << std::endl;
+        if(trues_count / 84.0 < 0.5){ std::cout << "Border size for doubles is " << --sz << std::endl; break; }
     }
-
 }
 
 TEST(End2endTests, Int3x3){
@@ -52,8 +49,6 @@ TEST(End2endTests, Int3x3){
 }
 
 TEST(End2endTests, Double3x3){
-    // ––Multiplication single test––
-
     std::vector<double> v = {2.09, 5.55, 4.93, 0.15, 8, 8.7, 0.87, 8.33, 4.68};
     Matrix<double> m(3, 3, v.begin(), v.end());
     double det = m.calculate_det();
@@ -88,5 +83,4 @@ TEST(UnitTests, MatrixCtors){
     std::vector<int> w(4, 1);
     Matrix<int> S = Matrix<int>(2, 2, w.begin(), w.end());
     EXPECT_TRUE(S.equal(M));
-
 }
