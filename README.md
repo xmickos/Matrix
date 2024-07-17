@@ -16,6 +16,6 @@ cd build
 ctest
 ```
 ## General algorithm:
-Solution based on Gauss elimination for all types except int and on Bird's division-free algorithm for integers. <br>
+Solution based on Gaussian elimination for all types except int and on Bird's division-free algorithm for integers. <br>
 Original paper: __(1,2) Bird, R. S. (2011). A simple division-free algorithm for computing determinants. Inf. Process. Lett., 111(21), 1072-1074. doi: 10.1016/j.ipl.2011.08.006 –__
 
