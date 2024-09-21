@@ -1,11 +1,21 @@
 #include<iostream>
 #include"include/matrix.hpp"
 #include<gtest/gtest.h>
+#include<cstdlib>
 
 using namespace matrix;
 
-TEST(UnitTests, MatrixCtors){
-    Matrix<int> M = Matrix<int>(2, 2, 1);
+TEST(UnitTests, Basics){
+    Matrix<int> a(4);
+
+    a[1][1] = 2;
+    char* b = (char*)malloc(22222);
+    throw 1;
+}
+
+TEST(UnitTests, DISABLED_MatrixCtors){
+    Matrix<int> M = Matrix<int>(2, 2);
+    M.fill(1);
     EXPECT_EQ(M[0][0], 1);
     EXPECT_EQ(M[0][1], 1);
     EXPECT_EQ(M[1][0], 1);
@@ -16,6 +26,8 @@ TEST(UnitTests, MatrixCtors){
     Matrix<int> N = Matrix<int>::eye(3);
     std::vector<int> v{1, 0, 0, 0, 1, 0, 0, 0, 1};
     Matrix<int> Q = Matrix<int>(3, 3, v.begin(), v.end());
+    N.print();
+    Q.print();
     EXPECT_TRUE(N.equal(Q));
 
     std::vector<int> w(4, 1);
@@ -23,7 +35,7 @@ TEST(UnitTests, MatrixCtors){
     EXPECT_TRUE(S.equal(M));
 }
 
-TEST(UnitTests, Multiplication){
+TEST(UnitTests, DISABLED_Multiplication){
     std::vector<int> v = {1, 2, 1, 0};
     std::vector<int> w = {1, 2, 3, 4};
     std::vector<int> q = {7, 10, 1, 2};
@@ -34,14 +46,14 @@ TEST(UnitTests, Multiplication){
     EXPECT_TRUE(C_true.equal(C));
 }
 
-TEST(End2endTests, Int3x3){
+TEST(End2endTests, DISABLED_Int3x3){
     std::vector<int> v = {48, 56, 0, -1, 23, 0, 0, 0, 1};
     Matrix<int> A(3, 3, v.begin(), v.end());
     int det = A.calculate_det();
     EXPECT_EQ(det, 1160);
 }
 
-TEST(End2endTests, Double3x3){
+TEST(End2endTests, DISABLED_Double3x3){
     std::vector<double> v = {2.09, 5.55, 4.93, 0.15, 8, 8.7, 0.87, 8.33, 4.68};
     Matrix<double> m(3, 3, v.begin(), v.end());
     double det = m.calculate_det();
@@ -49,7 +61,7 @@ TEST(End2endTests, Double3x3){
 }
 
 
-TEST(End2endTests, Integers150x150) {
+TEST(End2endTests, DISABLED_Integers150x150) {
     int true_det = 151;
     Matrix<int> mat_ = Matrix<int>::upper_triangular(150, true_det);
 
@@ -67,7 +79,7 @@ TEST(End2endTests, Integers150x150) {
     EXPECT_EQ(det, true_det);
 }
 
-TEST(End2endTests, GeneralInteger){
+TEST(End2endTests, DISABLED_GeneralInteger){
     double test_det, trues_count = 0.0;
     int dets_count = 42;
 

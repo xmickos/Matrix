@@ -7,109 +7,150 @@
 #include<cmath>
 #include<iterator>
 #include<utility>
+#include<functional>
 
 #pragma once
 
 namespace matrix {
     template <typename T> class Matrix;
 
-    template <typename T>
-    struct lpu_decomposition{
+    template <typename T> struct lpu_decomposition {
         Matrix<T> L, U;
         bool sign = false;
     };
 
-    template <typename T>
-    struct max_elem_vec{
+    // Debug only
+    struct A final {
+        A() { std::cout << "A()\n"; }
+        ~A() { std::cout << "~A()\n"; }
+    };
+
+
+    template <typename T> struct max_elem_vec {
         T max_{};
         int maxcol = 0, maxrow = 0;
     };
 
-    template <typename T>
-    class Matrix{
-        private:
+    template <typename T> class MatrixBuff {
+        protected:
             T** data = nullptr;
-            int cols_, rows_;
+            size_t cols_, rows_;
+
+            explicit MatrixBuff(int cls, int rws) : cols_(cls), rows_(rws) {
+                // Debug only
+                std::cout << "MatrixBuff()\n";
+
+                if(cls <= 0 || rws <= 0) {
+                    throw std::invalid_argument("Only positive matrix sizes are supported.");
+                }
+                data = new T*[cols_]{};
+            }
+
+            ~MatrixBuff() {
+                // Debug only
+                std::cout << "~MatrixBuff()\n";
+
+                for(size_t i = 0; i < cols_; ++i) {
+                    delete [] data[i];
+                }
+                delete data;
+            }
+    };
+
+    template <typename T> class Matrix final : private MatrixBuff<T> {
+        private:
+            using MatrixBuff<T>::data;
+            using MatrixBuff<T>::cols_;
+            using MatrixBuff<T>::rows_;
             const int rand_actions_count = 4;
 
             struct ProxyRow {
-                T* row;
+                T* row = nullptr;
 
                 T& operator[](int j) { return row[j]; }
                 const T& operator[](int j) const { return row[j]; }
+
+                // Debug only
+                ~ProxyRow() { std::cout << "~ProxyRow()\n"; }
             };
 
         public:
 
-            Matrix(int cls, int rws, T val = T{}) : cols_(cls), rows_(rws) {
-                if(cols_ > 0 && rows_ > 0){
-                    data = new T*[cols_];
-                    for(int i = 0; i < cols_; ++i){
-                        data[i] = new T[rows_];
-                        std::fill_n(data[i], rows_, val);
-                    }
-                }else{
-                    std::cout << "Wrong cls / rws params." << std::endl;
-                    abort();
+            explicit Matrix(size_t cls, size_t rws) : MatrixBuff<T>(cls, rws) {
+                // Debug only
+                std::cout << "Matrix ctor();" << std::endl;
+
+                for(int i = 0; i < cols_; ++i) {
+                    data[i] = new T[rows_];
                 }
             }
 
-            static Matrix eye(int sz_) {
-                if(sz_ > 0){
-                    int* seq_ = new int[sz_ * sz_]{};
+            explicit Matrix(size_t cls) : MatrixBuff<T>(cls, cls) { }
 
-                    for(int i = 0; i < sz_; ++i){
-                        seq_[ i * (sz_ + 1) ] = static_cast<T>(1);
-                    }
-
-                    Matrix<T> m(sz_, sz_, seq_, seq_ + sz_ * sz_);
-                    delete[] seq_;
-
-                    return m;
-                }else{
-                    std::cout << "Wrong sz_ param." << std::endl;
-                    abort();
+            Matrix(const Matrix& rhs) : MatrixBuff<T>(rhs.cols_, rhs.rows_) {
+                for(int i = 0; i < rhs.cols_; ++i) {
+                    std::copy(rhs.data[i], rhs.data[i] + rows_, data[i]);
                 }
             }
 
-            static Matrix zeros(int cols, int rows) {
-                int* seq_ = new int [cols * rows]{};
+            Matrix(Matrix&& rhs) noexcept : MatrixBuff<T>(rhs.cols_, rhs.rows_) {
+                std::swap(data, rhs.data);
+            }
 
-                Matrix<T> m(cols, rows, seq_, seq_ + cols * rows);
-                delete [] seq_;
+            Matrix& operator=(const Matrix& rhs) {
+                if(this == &rhs) return *this;
+                Matrix<T> tmp(rhs);
+                std::swap(this, tmp);
+                return *this;
+            }
 
+            Matrix& operator=(Matrix&& rhs) noexcept {
+                if(&rhs == this) return *this;
+                std::swap(data, rhs.data);
+                return *this;
+            }
+
+            static Matrix eye(int sz) {
+                Matrix m(sz, sz);
+                if( !std::is_convertible<int, T>::value ) {
+                    throw std::invalid_argument("Matrix of this type cant have an eye() method.\n");
+                }
+
+                for(int i = 0; i < sz; ++i) {
+                    m.data[i][i] = static_cast<T>(1);
+                }
                 return m;
             }
 
-            template<typename Iterator>
-            Matrix(int cls, int rws, Iterator it, Iterator et) : cols_(cls), rows_(rws) {
-                if(cols_ <= 0 || rows_ <= 0){
-                    std::cout << "Matrix sizes must be positive integers." << std::endl;
-                    abort();
+            void fill(T val) {
+                Matrix<T> tmp(cols_, rows_);
+
+                for(int i = 0; i < cols_; ++i) {
+                    std::fill_n(tmp.data[i], rows_, val);
                 }
 
-                if(std::distance(it, et) != cols_ * rows_){
-                    std::cout << "Wrong sequence length." << std::endl;
-                    abort();
-                }
+                std::swap(*this, tmp);
+            }
 
-                data = new T*[cols_];
+            static Matrix zeros(int cols_, int rows_) { return Matrix<T>(cols_, rows_); }
+
+            template<typename Iterator> Matrix(int cls, int rws, Iterator it, Iterator et) : MatrixBuff<T>(cls, rws) {
+                // if 'et' cant be got from 'it' in finite steps, the behaviour is undefined
+                Matrix<T> tmp(cls, rws);
 
                 for(int i = 0; i < cols_; ++i){
-                    data[i] = new T[rows_];
-                    std::copy(it, std::next(it, rows_), data[i]);
+                    std::copy(it, std::next(it, rows_), tmp.data[i]);
                     it = std::next(it, rows_);
                 }
+
+                std::swap(*this, tmp);
             }
 
-            static Matrix zeros_like(const Matrix<T>& m){
-                return zeros(m.cols_, m.rows_);
-            }
+            static Matrix zeros_like(const Matrix<T>& m) { return zeros(m.cols_, m.rows_); }
 
             static Matrix Matrix_add(Matrix<T>& m1, Matrix<T>& m2){
                 if(m1.cols_ != m2.cols_ || m1.rows_ != m2.rows_){
-                    std::cout << "Matrices are incompatible." << std::endl;
-                    abort();
+                    throw std::invalid_argument("Matrices are incompatible");
                 }
 
                 Matrix<T> m_out(m1.cols_, m1.rows_);
@@ -124,15 +165,14 @@ namespace matrix {
                 return m_out;
             }
 
-            bool swap_rows(int index1, int index2 ) {
+            bool swap_rows_(int index1, int index2 ) {
                 if(index1 > rows_) {
-                    std::cout << "index1 is out of matrix rows range." << std::endl;
-                    abort();
+                    throw std::invalid_argument("first index is out of matrix rows_ range.");
                 }
                 if(index2 > rows_) {
-                    std::cout << "index2 is out of matrix rows range." << std::endl;
-                    abort();
+                    throw std::invalid_argument("second index is out of matrix rows_ range.");
                 }
+
                 if(index1 == index2) { return false; }
 
                 std::swap(data[index1], data[index2]);
@@ -185,20 +225,20 @@ namespace matrix {
 
             bool swap_columns(int i, int j) {
                 transpose();
-                bool ret = swap_rows(i, j);
+                bool ret = swap_rows_(i, j);
                 transpose();
 
                 return ret;
             }
 
-            void add_rows(int i, int j, const T& coefficient = static_cast<T>(1)) {
+            void add_rows_(int i, int j, const T& coefficient = static_cast<T>(1)) {
                 auto f = [&](const T& x, const T& y){ return x + y * coefficient; };
                 std::transform(data[i], data[i] + rows_, data[j], data[i], f);
             }
 
             void add_columns(int i, int j, const T& coefficient) {
                 transpose();
-                add_rows(i, j, coefficient);
+                add_rows_(i, j, coefficient);
                 transpose();
             }
 
@@ -249,10 +289,10 @@ namespace matrix {
                 return m_;
             }
 
-            static Matrix upper_triangular(int cols, const T& det_) {
-                Matrix<T> m_ = eye(cols);
+            static Matrix upper_triangular(int cols_, const T& det_) {
+                Matrix<T> m_ = eye(cols_);
 
-                int rand_pos = std::rand() % cols;
+                int rand_pos = std::rand() % cols_;
                 m_[rand_pos][rand_pos] = det_;
 
                 for(int i = 0; i < m_.cols_; ++i){
@@ -282,10 +322,10 @@ namespace matrix {
                         break;
                     case 2:
                         swap_columns(col_ind, row_ind);
-                        swap_rows(row_ind, col_ind);
+                        swap_rows_(row_ind, col_ind);
                         break;
                     case 3:
-                        add_rows(col_ind, row_ind, static_cast<T>(1));
+                        add_rows_(col_ind, row_ind, static_cast<T>(1));
                         break;
                     case 4:
                         add_columns(col_ind, row_ind, static_cast<T>(1));
@@ -366,11 +406,11 @@ namespace matrix {
                         };
                     }
 
-                    permutations_count += U.swap_rows(i, max.maxrow);
+                    permutations_count += U.swap_rows_(i, max.maxrow);
                     permutations_count += U.swap_columns(i, max.maxcol);
                     for(int j = i + 1; j < rows_; ++j){
                         L[j][i] = U[j][i] / U[i][i];
-                        U.add_rows(j, i, -L[j][i]);
+                        U.add_rows_(j, i, -L[j][i]);
                     }
                 }
 
@@ -467,62 +507,6 @@ namespace matrix {
             const ProxyRow operator[](int i) const {
                 const ProxyRow row{data[i]};
                 return row;
-            }
-
-            Matrix(const Matrix& rhs) : cols_(rhs.cols_), rows_(rhs.rows_) {
-                data = new T*[cols_];
-
-                for(int i = 0; i < rhs.cols_; ++i){
-                    data[i] = new T[rows_];
-                    std::copy(rhs.data[i], rhs.data[i] + rows_, data[i]);
-                }
-            }
-
-            Matrix(Matrix&& rhs) : cols_(rhs.cols_), rows_(rhs.rows_), data(rhs.data) {
-                rhs.data = nullptr;
-            }
-
-            Matrix& operator=(const Matrix& rhs) {
-                if(this == &rhs) return *this;
-
-                for(int i = 0; i < cols_; ++i){
-                    delete [] data[i];
-                }
-                delete [] data;
-
-                cols_ = rhs.cols_;
-                rows_ = rhs.rows_;
-                data = new T*[cols_];
-
-                for(int i = 0; i < cols_; ++i){
-                    data[i] = new T[rows_];
-                    std::copy(rhs.data[i], rhs.data[i] + rows_, data[i]);
-                }
-
-                return *this;
-            }
-
-            Matrix& operator=(Matrix&& rhs){
-                if(&rhs == this) return *this;
-
-                if(cols_ != rhs.cols_ || rows_ != rhs.rows_) {
-                    std::cout << "Matrices are incompatible." << std::endl;
-                    abort();
-                }
-
-                std::swap(data, rhs.data);
-
-                return *this;
-            }
-
-            ~Matrix() {
-
-                if(data != nullptr){
-                    for(int i = 0; i < cols_; ++i){
-                        delete [] data[i];
-                    }
-                    delete [] data;
-                }
             }
     };
 
