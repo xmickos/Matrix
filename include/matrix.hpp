@@ -135,7 +135,6 @@ namespace matrix {
             static Matrix zeros(int cols_, int rows_) { return Matrix<T>(cols_, rows_); }
 
             template<typename Iterator> Matrix(int cls, int rws, Iterator it, Iterator et) : MatrixBuff<T>(cls, rws) {
-                // if 'et' cant be got from 'it' in finite steps, the behaviour is undefined
                 Matrix<T> tmp(cls, rws);
 
                 for(int i = 0; i < cols_; ++i){
@@ -165,22 +164,14 @@ namespace matrix {
                 return m_out;
             }
 
-            bool swap_rows_(int index1, int index2 ) {
-                if(index1 > rows_) {
-                    throw std::invalid_argument("first index is out of matrix rows_ range.");
-                }
-                if(index2 > rows_) {
-                    throw std::invalid_argument("second index is out of matrix rows_ range.");
-                }
-
+            bool swap_rows_(int index1, int index2 ) noexcept {
+                // if index1 > cols or index2 > rows, the behaviour is undefined
                 if(index1 == index2) { return false; }
-
                 std::swap(data[index1], data[index2]);
-
                 return true;
             }
 
-            T trace() const {
+            T trace() const noexcept(std::is_fundamental<T>::value) {
                 T trace_{};
                 for(int i = 0; i < cols_; ++i) {
                     trace_ += data[i][i];
@@ -188,20 +179,18 @@ namespace matrix {
                 return trace_;
             }
 
-            bool equal(const Matrix& other) const {
+            bool equal(const Matrix& other) const noexcept(std::is_fundamental<T>::value) {
                 for(int i = 0; i < cols_; ++i){
                     if(!std::equal(data[i], data[i] + cols_, other.data[i])){ return false; }
                 }
                 return true;
             }
 
-            bool less(const Matrix& other) const {
+            bool less(const Matrix& other) const noexcept(std::is_fundamental<T>::value) {
                 auto f = [&](const T& a, const T& b){ return a < b; };
-
                 for(int i = 0; i < cols_; ++i){
                     if(!std::equal(data[i], data[i] + cols_, other.data[i], f)){ return false; }
                 }
-
                 return true;
             }
 
@@ -213,7 +202,7 @@ namespace matrix {
                 return *this;
             }
 
-            Matrix& transpose() & {
+            Matrix& transpose() & { /* noexcept(std::is_nothrow_move_constructible<T> && std::is_nothrow_move_assignable<T>::value) ? */
                 for(int i = 0; i < cols_; ++i){
                     for(int j = 0; j <= i; ++j){
                         std::swap(data[i][j], data[j][i]);
@@ -265,7 +254,7 @@ namespace matrix {
                     for(int q = 0; q < B.rows_; ++q){
                         fixed_col[q] = B[q][i];
                     }
-                    for(int j = 0; j < A.rows_; ++j){
+                    for(int j = 0; j < A.rows_; ++j) {
                         C[j][i] = std::transform_reduce(A[j].row, A[j].row + A.cols_, fixed_col.begin(), static_cast<T>(0));
                     }
                 }
@@ -499,7 +488,7 @@ namespace matrix {
                 return m_;
             }
 
-            ProxyRow operator[](int i){
+            ProxyRow operator[](int i) {
                 ProxyRow row{data[i]};
                 return row;
             }
