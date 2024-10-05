@@ -23,7 +23,6 @@ TEST(UnitTests, MatrixCtors){
     std::vector<int> v{1, 0, 0, 0, 1, 0, 0, 0, 1};
     Matrix<int> Q = Matrix<int>(3, 3, v.begin(), v.end());
     for(auto it_ = v.begin(); it_ != v.end(); ++it_) { std::cout << *it_ << " "; }
-    std::cout << "\nN:" << std::endl;
     N.print();
     Q.print();
     EXPECT_TRUE(N.equal(Q));
@@ -47,9 +46,6 @@ TEST(UnitTests, Multiplication){
 TEST(End2endTests, Int3x3){
     std::vector<int> v = {48, 56, 0, -1, 23, 0, 0, 0, 1};
     Matrix<int> A(3, 3, v.begin(), v.end());
-    std::cout << "we are not here.\n";
-    A.print();
-    std::cout << "2\n";
     int det = A.calculate_det();
     EXPECT_EQ(det, 1160);
 }
