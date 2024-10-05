@@ -19,11 +19,13 @@ namespace matrix {
         bool sign = false;
     };
 
+    #if 0
     // Debug only
     struct A final {
         A() { std::cout << "A()\n"; }
         ~A() { std::cout << "~A()\n"; }
     };
+    #endif
 
 
     template <typename T> struct max_elem_vec {
@@ -44,11 +46,14 @@ namespace matrix {
                     throw std::invalid_argument("Only positive matrix sizes are supported.");
                 }
                 data = new T*[cols_]{};
+                std::cout << "MatrixBuff::data = " << data << " == " << *data << std::endl;
             }
 
             ~MatrixBuff() {
+                #if 0
                 // Debug only
                 std::cout << "~MatrixBuff()\n";
+                #endif
 
                 for(size_t i = 0; i < cols_; ++i) {
                     delete [] data[i];
@@ -71,14 +76,20 @@ namespace matrix {
                 const T& operator[](int j) const { return row[j]; }
 
                 // Debug only
-                ~ProxyRow() { std::cout << "~ProxyRow()\n"; }
+                ~ProxyRow() {
+                #if 0
+                std::cout << "~ProxyRow()\n";
+                #endif
+                }
             };
 
         public:
 
             explicit Matrix(size_t cls, size_t rws) : MatrixBuff<T>(cls, rws) {
+                #if 0
                 // Debug only
                 std::cout << "Matrix ctor();" << std::endl;
+                #endif
 
                 for(int i = 0; i < cols_; ++i) {
                     data[i] = new T[rows_];
@@ -87,9 +98,15 @@ namespace matrix {
 
             explicit Matrix(size_t cls) : MatrixBuff<T>(cls, cls) { }
 
-            Matrix(const Matrix& rhs) : MatrixBuff<T>(rhs.cols_, rhs.rows_) {
+            explicit Matrix(size_t cls, size_t rws, T val) : MatrixBuff<T>(cls, rws) { fill(val); }
+
+            Matrix(const Matrix& rhs) : Matrix<T>(rhs.cols_, rhs.rows_) {
+                #if 0
+                    std::cout << "Copy ctor called." << std::endl;
+                #endif
+
                 for(int i = 0; i < rhs.cols_; ++i) {
-                    std::copy(rhs.data[i], rhs.data[i] + rows_, data[i]);
+                    std::copy(rhs.data[i], rhs.data[i] + cols_, data[i]);
                 }
             }
 
@@ -98,6 +115,10 @@ namespace matrix {
             }
 
             Matrix& operator=(const Matrix& rhs) {
+                #if 0
+                    std::cout << "Copy assign called.\n";
+                #endif
+
                 if(this == &rhs) return *this;
                 Matrix<T> tmp(rhs);
                 std::swap(this, tmp);
@@ -105,15 +126,19 @@ namespace matrix {
             }
 
             Matrix& operator=(Matrix&& rhs) noexcept {
+                #if 0
+                    std::cout << "Move assign called.\n";
+                #endif
+
                 if(&rhs == this) return *this;
                 std::swap(data, rhs.data);
                 return *this;
             }
 
             static Matrix eye(int sz) {
-                Matrix m(sz, sz);
+                Matrix m(sz, sz, 0);
                 if( !std::is_convertible<int, T>::value ) {
-                    throw std::invalid_argument("Matrix of this type cant have an eye() method.\n");
+                    throw std::invalid_argument("Matrix of this type can't have an eye() method.\n");
                 }
 
                 for(int i = 0; i < sz; ++i) {
@@ -132,7 +157,11 @@ namespace matrix {
                 std::swap(*this, tmp);
             }
 
-            static Matrix zeros(int cols_, int rows_) { return Matrix<T>(cols_, rows_); }
+            static Matrix zeros(int cols_, int rows_) {
+                Matrix<T> m = Matrix<T>(cols_, rows_);
+                m.fill(static_cast<T>(0));
+                return m;
+            }
 
             template<typename Iterator> Matrix(int cls, int rws, Iterator it, Iterator et) : MatrixBuff<T>(cls, rws) {
                 Matrix<T> tmp(cls, rws);
@@ -173,9 +202,7 @@ namespace matrix {
 
             T trace() const noexcept(std::is_fundamental<T>::value) {
                 T trace_{};
-                for(int i = 0; i < cols_; ++i) {
-                    trace_ += data[i][i];
-                }
+                for(int i = 0; i < cols_; ++i) trace_ += data[i][i];
                 return trace_;
             }
 
@@ -346,9 +373,9 @@ namespace matrix {
 
             T calculate_det() const {
                 if(cols_ != rows_){
-                    std::cout << "Given matrix is not square." << std::endl;
-                    abort();
+                    throw std::invalid_argument("Given matrix is not square.");
                 }
+
                 if(cols_ == 1){ return data[0][0]; }
                 if(cols_ == 2){ return data[0][0] * data[1][1] - data[1][0] * data[0][1]; }
 
@@ -410,15 +437,14 @@ namespace matrix {
 
             T triangle_det() const {
                 T det = static_cast<T>(1);
-
                 for(int i = 0; i < cols_; ++i) {
                     det *= data[i][i];
                 }
-
                 return det;
             }
 
             void print() const noexcept {
+                std::cout << "cols_ = " << cols_ << ", rows_ = " << rows_ << std::endl;
                 for(int i = 0; i < cols_; ++i){
                     for(int j = 0; j < rows_; ++j){
                         #if 0 // for python debug via sympy lib
@@ -476,15 +502,12 @@ namespace matrix {
             int rows() const noexcept { return rows_; }
 
             operator Matrix<long double>() const {
-
                 Matrix<long double> m_ = Matrix<long double>::eye(cols_);
-
                 for(int i = 0; i < cols_; ++i){
                     for(int j = 0; j < rows_; ++j){
                         m_[i][j] = static_cast<long double>(data[i][j]);
                     }
                 }
-
                 return m_;
             }
 

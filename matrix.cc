@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
 
     std::cout << "std::is_move_assignable<Matrix<int>>: " << std::is_move_assignable<Matrix<int>>::value << std::endl;
     std::cout << "std::is_move_constructible<Matrix<int>>: " << std::is_move_constructible<Matrix<int>>::value << std::endl;
-    std::cout << "std::is_convertible<int, matrix::A>::value: " << std::is_convertible<int, matrix::A>::value << std::endl;
+    // std::cout << "std::is_convertible<int, matrix::A>::value: " << std::is_convertible<int, matrix::A>::value << std::endl;
     // std::cout << "static_cast<A>(1): " << static_cast<matrix::A>((int)1) << std::endl;
 
     try {
