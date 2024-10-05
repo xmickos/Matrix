@@ -39,14 +39,15 @@ namespace matrix {
             size_t cols_, rows_;
 
             explicit MatrixBuff(int cls, int rws) : cols_(cls), rows_(rws) {
+                #if 0
                 // Debug only
                 std::cout << "MatrixBuff()\n";
+                #endif
 
                 if(cls <= 0 || rws <= 0) {
                     throw std::invalid_argument("Only positive matrix sizes are supported.");
                 }
                 data = new T*[cols_]{};
-                std::cout << "MatrixBuff::data = " << data << " == " << *data << std::endl;
             }
 
             ~MatrixBuff() {
