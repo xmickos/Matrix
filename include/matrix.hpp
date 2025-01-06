@@ -38,11 +38,20 @@ namespace matrix {
             T** data = nullptr;
             size_t cols_, rows_;
 
+            // #if 0   // Debug only
+        public:
+            static int allocations;
+            static int deallocations;
+            static int alloc_summ;
+        protected:
+            // #endif
+
             explicit MatrixBuff(int cls, int rws) : cols_(cls), rows_(rws) {
-                #if 0
-                // Debug only
+                // #if 0 // Debug only
                 std::cout << "MatrixBuff()\n";
-                #endif
+                allocations++;
+                alloc_summ++;
+                // #endif
 
                 if(cls <= 0 || rws <= 0) {
                     throw std::invalid_argument("Only positive matrix sizes are supported.");
@@ -51,10 +60,13 @@ namespace matrix {
             }
 
             ~MatrixBuff() {
-                #if 0
-                // Debug only
+                // #if 0 // Debug only
                 std::cout << "~MatrixBuff()\n";
-                #endif
+                deallocations++;
+                alloc_summ--;
+                std::cout << "deallocs: " << deallocations << std::endl;
+                std::cout << "alloc_summ: " << alloc_summ << std::endl;
+                // #endif
 
                 for(size_t i = 0; i < cols_; ++i) {
                     delete [] data[i];
@@ -97,9 +109,9 @@ namespace matrix {
                 }
             }
 
-            explicit Matrix(size_t cls) : MatrixBuff<T>(cls, cls) { }
+            explicit Matrix(size_t cls) : Matrix<T>(cls, cls) { }
 
-            explicit Matrix(size_t cls, size_t rws, T val) : MatrixBuff<T>(cls, rws) { fill(val); }
+            explicit Matrix(size_t cls, size_t rws, T val) : MatrixBuff<T>(cls, rws) { std::cout << "filling\n"; fill(val); }
 
             Matrix(const Matrix& rhs) : Matrix<T>(rhs.cols_, rhs.rows_) {
                 #if 0
