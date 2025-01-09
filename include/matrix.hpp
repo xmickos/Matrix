@@ -47,19 +47,25 @@ namespace matrix {
             // #endif
 
             explicit MatrixBuff(int cls, int rws) : cols_(cls), rows_(rws) {
-                // #if 0 // Debug only
-                std::cout << "MatrixBuff()\n";
-                allocations++;
-                alloc_summ++;
-                // #endif
-
                 if(cls <= 0 || rws <= 0) {
                     throw std::invalid_argument("Only positive matrix sizes are supported.");
                 }
                 data = new T*[cols_]{};
+
+                // #if 0 // Debug only
+                std::cout << "MatrixBuff()\n";
+                allocations++;
+                alloc_summ++;
+                std::cout << "allocs: " << allocations << std::endl;
+                // #endif
             }
 
             ~MatrixBuff() {
+                for(size_t i = 0; i < cols_; ++i) {
+                    delete [] data[i];
+                }
+                delete data;
+
                 // #if 0 // Debug only
                 std::cout << "~MatrixBuff()\n";
                 deallocations++;
@@ -67,11 +73,6 @@ namespace matrix {
                 std::cout << "deallocs: " << deallocations << std::endl;
                 std::cout << "alloc_summ: " << alloc_summ << std::endl;
                 // #endif
-
-                for(size_t i = 0; i < cols_; ++i) {
-                    delete [] data[i];
-                }
-                delete data;
             }
     };
 
@@ -99,10 +100,8 @@ namespace matrix {
         public:
 
             explicit Matrix(size_t cls, size_t rws) : MatrixBuff<T>(cls, rws) {
-                #if 0
                 // Debug only
                 std::cout << "Matrix ctor();" << std::endl;
-                #endif
 
                 for(int i = 0; i < cols_; ++i) {
                     data[i] = new T[rows_];
@@ -111,12 +110,12 @@ namespace matrix {
 
             explicit Matrix(size_t cls) : Matrix<T>(cls, cls) { }
 
-            explicit Matrix(size_t cls, size_t rws, T val) : MatrixBuff<T>(cls, rws) { std::cout << "filling\n"; fill(val); }
+            explicit Matrix(size_t cls, size_t rws, T&& val) : MatrixBuff<T>(cls, rws) { std::cout << "filling\n"; fill(std::move(val)); std::cout << "filled\n";}
 
             Matrix(const Matrix& rhs) : Matrix<T>(rhs.cols_, rhs.rows_) {
-                #if 0
+                // #if 0
                     std::cout << "Copy ctor called." << std::endl;
-                #endif
+                // #endif
 
                 for(int i = 0; i < rhs.cols_; ++i) {
                     std::copy(rhs.data[i], rhs.data[i] + cols_, data[i]);
@@ -124,17 +123,22 @@ namespace matrix {
             }
 
             Matrix(Matrix&& rhs) noexcept : MatrixBuff<T>(rhs.cols_, rhs.rows_) {
+                // #if 0
+                    std::cout << "Move ctor called." << std::endl;
+                // #endif
+
                 std::swap(data, rhs.data);
             }
 
             Matrix& operator=(const Matrix& rhs) {
-                #if 0
+                // #if 0
                     std::cout << "Copy assign called.\n";
-                #endif
+                // #endif
 
                 if(this == &rhs) return *this;
+                std::cout << "Started constructing tmp." << std::endl;
                 Matrix<T> tmp(rhs);
-                std::swap(this, tmp);
+                std::swap(*this, tmp);
                 return *this;
             }
 
@@ -145,6 +149,8 @@ namespace matrix {
 
                 if(&rhs == this) return *this;
                 std::swap(data, rhs.data);
+                cols_ = rhs.cols_;
+                rows_ = rhs.rows_;
                 return *this;
             }
 
@@ -160,7 +166,7 @@ namespace matrix {
                 return m;
             }
 
-            void fill(T val) {
+            void fill(T&& val) { //
                 Matrix<T> tmp(cols_, rows_);
 
                 for(int i = 0; i < cols_; ++i) {
@@ -170,11 +176,7 @@ namespace matrix {
                 std::swap(*this, tmp);
             }
 
-            static Matrix zeros(int cols_, int rows_) {
-                Matrix<T> m = Matrix<T>(cols_, rows_);
-                m.fill(static_cast<T>(0));
-                return m;
-            }
+            static Matrix zeros(int cols_, int rows_) { return Matrix<T>(cols_, rows_, static_cast<T>(0)); }
 
             template<typename Iterator> Matrix(int cls, int rws, Iterator it, Iterator et) : MatrixBuff<T>(cls, rws) {
                 Matrix<T> tmp(cls, rws);
@@ -385,6 +387,9 @@ namespace matrix {
         public:
 
             T calculate_det() const {
+
+                std::cout << "calculate_det_double\n";
+
                 if(cols_ != rows_){
                     throw std::invalid_argument("Given matrix is not square.");
                 }
@@ -541,6 +546,8 @@ template <> int matrix::Matrix<int>::calculate_det() const {
     // Original paper:
     // (1,2) Bird, R. S. (2011). A simple division-free algorithm for computing determinants. Inf. Process. Lett., 111(21), 1072-1074.
     // doi: 10.1016/j.ipl.2011.08.006 –
+
+    std::cout << "calculate_det_int\n";
 
     matrix::Matrix<int> A = *this;
     matrix::Matrix<int> Fn = A;
