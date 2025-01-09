@@ -53,10 +53,14 @@ namespace matrix {
                 data = new T*[cols_]{};
 
                 // #if 0 // Debug only
+                #if 0
                 std::cout << "MatrixBuff()\n";
+                #endif
                 allocations++;
                 alloc_summ++;
+                #if 0
                 std::cout << "allocs: " << allocations << std::endl;
+                #endif
                 // #endif
             }
 
@@ -67,11 +71,15 @@ namespace matrix {
                 delete data;
 
                 // #if 0 // Debug only
+                #if 0
                 std::cout << "~MatrixBuff()\n";
+                #endif
                 deallocations++;
                 alloc_summ--;
+                #if 0
                 std::cout << "deallocs: " << deallocations << std::endl;
                 std::cout << "alloc_summ: " << alloc_summ << std::endl;
+                #endif
                 // #endif
             }
     };
@@ -92,7 +100,7 @@ namespace matrix {
                 // Debug only
                 ~ProxyRow() {
                 #if 0
-                std::cout << "~ProxyRow()\n";
+                    std::cout << "~ProxyRow()\n";
                 #endif
                 }
             };
@@ -100,8 +108,9 @@ namespace matrix {
         public:
 
             explicit Matrix(size_t cls, size_t rws) : MatrixBuff<T>(cls, rws) {
-                // Debug only
-                std::cout << "Matrix ctor();" << std::endl;
+                #if 0 // Debug only
+                    std::cout << "Matrix ctor();" << std::endl;
+                #endif
 
                 for(int i = 0; i < cols_; ++i) {
                     data[i] = new T[rows_];
@@ -110,12 +119,12 @@ namespace matrix {
 
             explicit Matrix(size_t cls) : Matrix<T>(cls, cls) { }
 
-            explicit Matrix(size_t cls, size_t rws, T&& val) : MatrixBuff<T>(cls, rws) { std::cout << "filling\n"; fill(std::move(val)); std::cout << "filled\n";}
+            explicit Matrix(size_t cls, size_t rws, T&& val) : MatrixBuff<T>(cls, rws) { fill(std::move(val)); }
 
             Matrix(const Matrix& rhs) : Matrix<T>(rhs.cols_, rhs.rows_) {
-                // #if 0
+                #if 0
                     std::cout << "Copy ctor called." << std::endl;
-                // #endif
+                #endif
 
                 for(int i = 0; i < rhs.cols_; ++i) {
                     std::copy(rhs.data[i], rhs.data[i] + cols_, data[i]);
@@ -123,20 +132,19 @@ namespace matrix {
             }
 
             Matrix(Matrix&& rhs) noexcept : MatrixBuff<T>(rhs.cols_, rhs.rows_) {
-                // #if 0
+                #if 0
                     std::cout << "Move ctor called." << std::endl;
-                // #endif
+                #endif
 
                 std::swap(data, rhs.data);
             }
 
             Matrix& operator=(const Matrix& rhs) {
-                // #if 0
+                #if 0
                     std::cout << "Copy assign called.\n";
-                // #endif
+                #endif
 
                 if(this == &rhs) return *this;
-                std::cout << "Started constructing tmp." << std::endl;
                 Matrix<T> tmp(rhs);
                 std::swap(*this, tmp);
                 return *this;
@@ -166,7 +174,7 @@ namespace matrix {
                 return m;
             }
 
-            void fill(T&& val) { //
+            void fill(T&& val) {
                 Matrix<T> tmp(cols_, rows_);
 
                 for(int i = 0; i < cols_; ++i) {
@@ -387,9 +395,6 @@ namespace matrix {
         public:
 
             T calculate_det() const {
-
-                std::cout << "calculate_det_double\n";
-
                 if(cols_ != rows_){
                     throw std::invalid_argument("Given matrix is not square.");
                 }
@@ -546,8 +551,6 @@ template <> int matrix::Matrix<int>::calculate_det() const {
     // Original paper:
     // (1,2) Bird, R. S. (2011). A simple division-free algorithm for computing determinants. Inf. Process. Lett., 111(21), 1072-1074.
     // doi: 10.1016/j.ipl.2011.08.006 –
-
-    std::cout << "calculate_det_int\n";
 
     matrix::Matrix<int> A = *this;
     matrix::Matrix<int> Fn = A;

@@ -17,12 +17,12 @@ namespace matrix {
             static int alloc_summ;
 
             MyInt(int val = 0) : value(val) {
-                if(throwing && crash_cnt == max_allocs_count) throw std::bad_alloc();
+                if(throwing && crash_cnt == max_allocs_count) { std::cout << "throwing\n"; throw std::bad_alloc(); }
                 if(!throwing && crash_cnt == max_allocs_count) throw std::bad_weak_ptr();
                 crash_cnt++;
                 allocations++;
                 alloc_summ++;
-                std::cout << "MyInt()\n";
+                std::cout << "MyInt() " << crash_cnt << "\n";
             }
 
             auto operator<=>(const MyInt& rhs) const = default;
@@ -35,7 +35,7 @@ namespace matrix {
 
             MyInt& operator*=(const MyInt& rhs) {
                 std::cout << "*=\n";
-                if(throwing) { throw std::bad_function_call(); }
+                if(throwing && crash_cnt == max_allocs_count) { throw std::bad_function_call(); }
                 if(throwing && rhs.get_value() == 43) { throw std::bad_function_call(); }
                 value *= rhs.value; return *this;
             }
@@ -43,13 +43,17 @@ namespace matrix {
             std::ostream& operator<<(std::ostream& os) const { return os << value; }
 
             operator int() const {
-                std::cout << "int()\n";
-                if(throwing) { throw std::bad_function_call(); }
+                if(throwing && crash_cnt == max_allocs_count) { throw std::bad_function_call(); }
+                std::cout << "int() " << crash_cnt << "\n";
                 return value;
             }
 
+            // operator float() const {
+            //     std::cout << "float()\n";
+            //     return static_cast<double>(value);
+            // }
+
             int get_value() const noexcept { return value; }
-            void crash_cnt_up() { crash_cnt++; }
 
             ~MyInt() {
                 deallocations++;
@@ -77,7 +81,7 @@ template <bool throwing, int max_allocs_count> int MyInt<throwing, max_allocs_co
 
 // TEST(UnitTests, Basics){ }
 
-TEST(UnitTests, DISABLED_MatrixCtors){
+TEST(UnitTests, MatrixCtors){
     Matrix<int> M = Matrix<int>(2, 2);
     M.fill(1);
     EXPECT_EQ(M[0][0], 1);
@@ -174,46 +178,71 @@ TEST(UnitTests, Ctor_exceptions){
     std::cout << "--- #3 — 4th ctor" << std::endl;
 
     try {
-
-        std::vector<MyInt<false, 17>> v(9);
-        Matrix<MyInt<false, 17>> A(3, 3, v.begin(), v.end());
-
+        std::vector<MyInt<false, 17>> v(9);     // 9 x MyInt();
+        std::cout << "v constructed." << std::endl;
+        Matrix<MyInt<false, 17>> A(3, 3, v.begin(), v.end()); // 2 x MatrixBuff() and 8 x MyInt();
     } catch(std::bad_weak_ptr& e) { std::cout << "Catched!" << std::endl; }
 
-    EXPECT_EQ(int(MatrixBuff<MyInt<false, 17>>::allocations), 1);
+    EXPECT_EQ(int(MatrixBuff<MyInt<false, 17>>::allocations), 2);
     EXPECT_EQ(int(MatrixBuff<MyInt<false, 17>>::allocations), int(MatrixBuff<MyInt<false, 17>>::deallocations));
     EXPECT_EQ(int(MatrixBuff<MyInt<false, 17>>::alloc_summ), 0);
 
-    EXPECT_EQ(int(MyInt<false, 17>::allocations), 16);
+    EXPECT_EQ(int(MyInt<false, 17>::allocations), 17);
     EXPECT_EQ(int(MyInt<false, 17>::allocations), int(MyInt<false, 17>::deallocations));
     EXPECT_EQ(int(MyInt<false, 17>::alloc_summ), 0);
 
 }
 
 TEST(End2EndTests, Determinant_exceptions){
-    MatrixBuff<MyInt<true>>::allocations = 0;
-    MatrixBuff<MyInt<true>>::deallocations = 0;
-    MatrixBuff<MyInt<true>>::alloc_summ = 0;
-    MyInt<true>::allocations = 0;
-    MyInt<true>::deallocations = 0;
-    MyInt<true>::alloc_summ = 0;
+    std::cout << "--- #0 — lpu_decompose." << std::endl;
+
+    MatrixBuff<MyInt<true, 12>>::allocations = 0;
+    MatrixBuff<MyInt<true, 12>>::deallocations = 0;
+    MatrixBuff<MyInt<true, 12>>::alloc_summ = 0;
+    MyInt<true, 12>::allocations = 0;
+    MyInt<true, 12>::deallocations = 0;
+    MyInt<true, 12>::alloc_summ = 0;
 
     try {
-        Matrix<MyInt<true>> A(3, 3);
+        Matrix<MyInt<true, 12>> A(3, 3);
 
-        A[0][0] = MyInt<true>(1);
-        A[1][1] = MyInt<true>(43);
-        A[2][2] = MyInt<true>(1);
+        A[0][0] = MyInt<true, 12>(1);
+        A[1][1] = MyInt<true, 12>(43);
+        A[2][2] = MyInt<true, 12>(1);
 
-        std::cout << "MyInt allocations: " << MyInt<true>::allocations << std::endl;
-        A.calculate_det();
-    } catch(std::bad_function_call& e) {}
+        std::cout << "calculating" << std::endl;
 
-    EXPECT_EQ(MatrixBuff<MyInt<true>>::allocations, MatrixBuff<MyInt<true>>::deallocations);
-    EXPECT_EQ(MatrixBuff<MyInt<true>>::alloc_summ, 0);
+        A.calculate_det();  // fail in lpu_decompose()
+    } catch(std::bad_function_call& e) { std::cout << "Catched!" << std::endl; }
+
+    EXPECT_EQ(int(MatrixBuff<MyInt<true, 12>>::allocations), int(MatrixBuff<MyInt<true, 12>>::deallocations));
+    EXPECT_EQ(int(MatrixBuff<MyInt<true, 12>>::alloc_summ), 0);
+
+    EXPECT_EQ(int(MyInt<true, 12>::allocations), int(MyInt<true, 12>::deallocations));
+    EXPECT_EQ(int(MyInt<true, 12>::alloc_summ), 0);
+
+    #if 0
+        std::cout << "--- #1 — triangle_det." << std::endl;
+
+        MyInt<true, 9>::allocations = 0;
+        MyInt<true, 9>::deallocations = 0;
+        MyInt<true, 9>::alloc_summ = 0;
+
+        try {
+            Matrix<MyInt<true, 9>> A(3, 3);
+            A.calculate_det(); // fail in triangle_det
+        } catch(std::bad_alloc& e) { std::cout << "Catched!" << std::endl; }
+
+        EXPECT_EQ(int(MatrixBuff<MyInt<true, 9>>::allocations), int(MatrixBuff<MyInt<true, 9>>::deallocations));
+        EXPECT_EQ(int(MatrixBuff<MyInt<true, 9>>::alloc_summ), 0);
+
+        EXPECT_EQ(int(MyInt<true, 9>::allocations), int(MyInt<true, 9>::deallocations));
+        EXPECT_EQ(int(MyInt<true, 9>::alloc_summ), 0);
+
+    #endif
 }
 
-TEST(UnitTests, DISABLED_Multiplication){
+TEST(UnitTests, Multiplication){
     std::vector<int> v = {1, 2, 1, 0};
     std::vector<int> w = {1, 2, 3, 4};
     std::vector<int> q = {7, 10, 1, 2};
@@ -224,21 +253,21 @@ TEST(UnitTests, DISABLED_Multiplication){
     EXPECT_TRUE(C_true.equal(C));
 }
 
-TEST(End2endTests, DISABLED_Int3x3){
+TEST(End2endTests, Int3x3){
     std::vector<int> v = {48, 56, 0, -1, 23, 0, 0, 0, 1};
     Matrix<int> A(3, 3, v.begin(), v.end());
     int det = A.calculate_det();
     EXPECT_EQ(det, 1160);
 }
 
-TEST(End2endTests, DISABLED_Double3x3){
+TEST(End2endTests, Double3x3){
     std::vector<double> v = {2.09, 5.55, 4.93, 0.15, 8, 8.7, 0.87, 8.33, 4.68};
     Matrix<double> m(3, 3, v.begin(), v.end());
     double det = m.calculate_det();
     EXPECT_EQ(det, -63.255705);
 }
 
-TEST(End2endTests, DISABLED_Integers150x150) {
+TEST(End2endTests, Integers150x150) {
     int true_det = 151;
     Matrix<int> mat_ = Matrix<int>::upper_triangular(150, true_det);
 
@@ -256,7 +285,7 @@ TEST(End2endTests, DISABLED_Integers150x150) {
     EXPECT_EQ(det, true_det);
 }
 
-TEST(End2endTests, DISABLED_GeneralInteger){
+TEST(End2endTests, GeneralInteger){
     double test_det, trues_count = 0.0;
     int dets_count = 42;
 
