@@ -146,7 +146,7 @@ namespace matrix {
 
                 if(this == &rhs) return *this;
                 Matrix<T> tmp(rhs);
-                std::swap(*this, tmp);
+                std::iter_swap(this, &tmp);
                 return *this;
             }
 
@@ -181,7 +181,7 @@ namespace matrix {
                     std::fill_n(tmp.data[i], rows_, val);
                 }
 
-                std::swap(*this, tmp);
+                std::iter_swap(this, &tmp);
             }
 
             static Matrix zeros(int cols_, int rows_) { return Matrix<T>(cols_, rows_, static_cast<T>(0)); }
@@ -194,7 +194,7 @@ namespace matrix {
                     it = std::next(it, rows_);
                 }
 
-                std::swap(*this, tmp);
+                std::iter_swap(this, &tmp);
             }
 
             static Matrix zeros_like(const Matrix<T>& m) { return zeros(m.cols_, m.rows_); }
