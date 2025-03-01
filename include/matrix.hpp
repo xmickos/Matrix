@@ -72,7 +72,7 @@ namespace matrix {
 
                 // #if 0 // Debug only
                 #if 0
-                std::cout << "~MatrixBuff()\n";
+                std::cout << "~MatrixBuff() for " << this << std::endl;
                 #endif
                 deallocations++;
                 alloc_summ--;
@@ -119,7 +119,7 @@ namespace matrix {
 
             explicit Matrix(size_t cls) : Matrix<T>(cls, cls) { }
 
-            explicit Matrix(size_t cls, size_t rws, T&& val) : MatrixBuff<T>(cls, rws) { fill(std::move(val)); }
+            explicit Matrix(size_t cls, size_t rws, const T& val) : MatrixBuff<T>(cls, rws) { fill(val); }
 
             Matrix(const Matrix& rhs) : Matrix<T>(rhs.cols_, rhs.rows_) {
                 #if 0
@@ -155,10 +155,11 @@ namespace matrix {
                     std::cout << "Move assign called.\n";
                 #endif
 
-                if(&rhs == this) return *this;
-                std::swap(data, rhs.data);
-                cols_ = rhs.cols_;
-                rows_ = rhs.rows_;
+                if(&rhs != this){
+                    std::swap(data, rhs.data);
+                    cols_ = rhs.cols_;
+                    rows_ = rhs.rows_;
+                }
                 return *this;
             }
 
@@ -174,17 +175,36 @@ namespace matrix {
                 return m;
             }
 
-            void fill(T&& val) {
+            void print() const noexcept {
+                std::cout << "cols_ = " << cols_ << ", rows_ = " << rows_ << std::endl;
+                for(int i = 0; i < cols_; ++i){
+                    for(int j = 0; j < rows_; ++j){
+                        #if 0 // for python debug via sympy lib
+                        if(i == j) std::cout << '[';
+                        #endif
+
+                        std::cout << data[i][j] << " ";
+
+                        #if 0 // for python debug via sympy lib
+                        if(i == j) std::cout << ']';
+                        #endif
+                    }
+                    std::cout << std::endl;
+                }
+            }
+
+            void fill(const T& val) {
                 Matrix<T> tmp(cols_, rows_);
 
                 for(int i = 0; i < cols_; ++i) {
                     std::fill_n(tmp.data[i], rows_, val);
                 }
 
-                std::iter_swap(this, &tmp);
+                std::swap(*this, tmp);
             }
 
             static Matrix zeros(int cols_, int rows_) { return Matrix<T>(cols_, rows_, static_cast<T>(0)); }
+            // static Matrix zeros(int sz_) { std::cout << "2"; return Matrix<T>(sz_, sz_, static_cast<T>(0)); }
 
             template<typename Iterator> Matrix(int cls, int rws, Iterator it, Iterator et) : MatrixBuff<T>(cls, rws) {
                 Matrix<T> tmp(cls, rws);
@@ -251,6 +271,8 @@ namespace matrix {
 
                 return *this;
             }
+
+            bool is_nullptr() { return data == nullptr; }
 
             Matrix& transpose() & { /* noexcept(std::is_nothrow_move_constructible<T> && std::is_nothrow_move_assignable<T>::value) ? */
                 for(int i = 0; i < cols_; ++i){
@@ -464,24 +486,6 @@ namespace matrix {
                     det *= data[i][i];
                 }
                 return det;
-            }
-
-            void print() const noexcept {
-                std::cout << "cols_ = " << cols_ << ", rows_ = " << rows_ << std::endl;
-                for(int i = 0; i < cols_; ++i){
-                    for(int j = 0; j < rows_; ++j){
-                        #if 0 // for python debug via sympy lib
-                        if(i == j) std::cout << '[';
-                        #endif
-
-                        std::cout << data[i][j] << " ";
-
-                        #if 0 // for python debug via sympy lib
-                        if(i == j) std::cout << ']';
-                        #endif
-                    }
-                    std::cout << std::endl;
-                }
             }
 
             void python_print() const noexcept {

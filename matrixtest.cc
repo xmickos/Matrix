@@ -48,11 +48,6 @@ namespace matrix {
                 return value;
             }
 
-            // operator float() const {
-            //     std::cout << "float()\n";
-            //     return static_cast<double>(value);
-            // }
-
             int get_value() const noexcept { return value; }
 
             ~MyInt() {
