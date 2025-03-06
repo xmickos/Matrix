@@ -47,6 +47,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             -g
             -O0
     )
+    target_compile_options(matrixlib
+        PRIVATE
+            -g
+            -O0
+    )
 endif()
 
 enable_testing()

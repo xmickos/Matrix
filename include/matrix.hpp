@@ -127,7 +127,7 @@ namespace matrix {
                 #endif
 
                 for(int i = 0; i < rhs.cols_; ++i) {
-                    std::copy(rhs.data[i], rhs.data[i] + cols_, data[i]);
+                    std::copy(rhs.data[i], rhs.data[i] + rows_, data[i]);
                 }
             }
 
@@ -146,14 +146,14 @@ namespace matrix {
 
                 if(this == &rhs) return *this;
                 Matrix<T> tmp(rhs);
-                std::iter_swap(this, &tmp);
+                std::swap(*this, tmp);
                 return *this;
             }
 
             Matrix& operator=(Matrix&& rhs) noexcept {
                 #if 0
                     std::cout << "Move assign called.\n";
-                #endif
+                #endifs
 
                 if(&rhs != this){
                     std::swap(data, rhs.data);
@@ -204,7 +204,6 @@ namespace matrix {
             }
 
             static Matrix zeros(int cols_, int rows_) { return Matrix<T>(cols_, rows_, static_cast<T>(0)); }
-            // static Matrix zeros(int sz_) { std::cout << "2"; return Matrix<T>(sz_, sz_, static_cast<T>(0)); }
 
             template<typename Iterator> Matrix(int cls, int rws, Iterator it, Iterator et) : MatrixBuff<T>(cls, rws) {
                 Matrix<T> tmp(cls, rws);
@@ -271,8 +270,6 @@ namespace matrix {
 
                 return *this;
             }
-
-            bool is_nullptr() { return data == nullptr; }
 
             Matrix& transpose() & { /* noexcept(std::is_nothrow_move_constructible<T> && std::is_nothrow_move_assignable<T>::value) ? */
                 for(int i = 0; i < cols_; ++i){

@@ -50,16 +50,20 @@ int main(int argc, char** argv) {
 //     mc.append(c);
 //     mc.append(d);
 
-    Matrix<int> a = Matrix<int>(10, 30, static_cast<int>(0));
-    const Matrix<int>& b = Matrix<int>(30, 5, static_cast<int>(0));
+    Matrix<int> a = Matrix<int>(10, 30, 1);
+    // a.print();
+    Matrix<int> b = Matrix<int>(30, 5, 30);
+    // std::cout << "Correct" << std::endl;
+    // Matrix<int> c = b;
+    Matrix<int> d(b);
     Matrix<int> c = Matrix<int>(5, 60, static_cast<int>(0));
     MatrixChain<int> mc(a);
-    std::vector<Matrix<int>> vec;
-    vec.push_back(b);
-    // mc.append(b);
-    // mc.append(c);
+    mc.append(b);
+    mc.append(c);
 
-    mc.matrix_chain_order();
+    // mc.matrix_chain_order();
+
+
 
 
 
