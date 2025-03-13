@@ -153,7 +153,7 @@ namespace matrix {
             Matrix& operator=(Matrix&& rhs) noexcept {
                 #if 0
                     std::cout << "Move assign called.\n";
-                #endifs
+                #endif
 
                 if(&rhs != this){
                     std::swap(data, rhs.data);

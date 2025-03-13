@@ -50,21 +50,34 @@ int main(int argc, char** argv) {
 //     mc.append(c);
 //     mc.append(d);
 
-    Matrix<int> a = Matrix<int>(10, 30, 1);
-    // a.print();
-    Matrix<int> b = Matrix<int>(30, 5, 30);
-    // std::cout << "Correct" << std::endl;
-    // Matrix<int> c = b;
-    Matrix<int> d(b);
-    Matrix<int> c = Matrix<int>(5, 60, static_cast<int>(0));
-    MatrixChain<int> mc(a);
-    mc.append(b);
-    mc.append(c);
+//     Matrix<int> a = Matrix<int>(10, 30, 1);
+//     // a.print();
+//     Matrix<int> b = Matrix<int>(30, 5, 30);
+//     // std::cout << "Correct" << std::endl;
+//     // Matrix<int> c = b;
+//     Matrix<int> d(b);
+//     Matrix<int> c = Matrix<int>(5, 60, static_cast<int>(0));
+//     MatrixChain<int> mc(a);
+//     mc.append(b);
+//     mc.append(c);
+//
+//     mc.matrix_chain_order();
 
-    // mc.matrix_chain_order();
+    Matrix<int> a1 = Matrix<int>(10, 5, 1);
+    Matrix<int> b1 = Matrix<int>(5, 60, 1);
+    Matrix<int> c1 = Matrix<int>(60, 30, 1);
+    Matrix<int> d1 = Matrix<int>(5, 10, 1);
+    Matrix<int> e1 = Matrix<int>(10, 20, 1);
+    Matrix<int> f1 = Matrix<int>(20, 25, 1);
+    MatrixChain<int> mc1;
+    mc1.append(a1);
+    mc1.append(b1);
+    mc1.append(c1);
+    mc1.append(d1);
+    mc1.append(e1);
+    mc1.append(f1);
 
-
-
+    mc1.matrix_chain_order();
 
 
     return 0;

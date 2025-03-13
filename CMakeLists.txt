@@ -48,7 +48,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
             -O0
     )
     target_compile_options(matrixlib
-        PRIVATE
+        PUBLIC
             -g
             -O0
     )

@@ -25,7 +25,7 @@ template <typename T> class MatrixChain final {
 
         void append(Matrix<T>&& rhs) {
             buff_.push_back(rhs);
-            if(buff_.empty()) {
+            if(p_.empty()) {
                 p_.push_back(rhs.cols());
                 p_.push_back(rhs.rows());
             } else {
@@ -34,8 +34,9 @@ template <typename T> class MatrixChain final {
         }
         void append(const Matrix<T>& rhs) {
             buff_.push_back(rhs);
-            if(buff_.empty()) {
+            if(p_.empty()) {
                 p_.push_back(rhs.cols());
+                p_.push_back(rhs.rows());
             } else {
                 p_.push_back(rhs.rows());
             }
@@ -57,8 +58,28 @@ template <typename T> class MatrixChain final {
         }
 
         void print_optimal_order(const Matrix<int>& s, int i, int j) const {
+            if(i == s[i][j] && s[i][j] + 1 == j) {
+                std::cout << ((i < j) ? i : j);
+                std::cout << ((i < j) ? j : i);
+                return;
+            }
             if(i == j) {
-                std::cout << "A_" << i;
+                std::cout << i;
+            } else {
+                if(i < s[i][j]) {
+                    print_optimal_order(s, i, s[i][j]);
+                    print_optimal_order(s, s[i][j] + 1, j);
+                } else {
+                    print_optimal_order(s, s[i][j] + 1, j);
+                    print_optimal_order(s, i, s[i][j]);
+                }
+            }
+        }
+
+        #if 0
+        void print_optimal_order(const Matrix<int>& s, int i, int j) const {
+            if(i == j) {
+                std::cout << i;
             } else {
                 std::cout << "(";
                 print_optimal_order(s, i, s[i][j]);
@@ -66,20 +87,24 @@ template <typename T> class MatrixChain final {
                 std::cout << ")";
             }
         }
+        #endif
+
 
         void matrix_chain_order() const {
             std::cout << buff_.size() << std::endl;
             Matrix<int> m = Matrix<int>::zeros(buff_.size(), buff_.size());
             Matrix<int> s = Matrix<int>::zeros(buff_.size(), buff_.size());
+            std::for_each(p_.begin(), p_.end(), [&](auto i){ std::cout << i << " ";});
+            std::cout << std::endl;
 
             int n = p_.size() - 1;
             int q = 0;
-            for(int l = 2; l < n; ++l) {
-                for(int i = 1; i < n - l + 1; ++i) {
+            for(int l = 2; l <= n; ++l) {
+                for(int i = 0; i < n - l + 1; ++i) {
                     int j = i + l - 1;
                     m[i][j] = INT_MAX;
-                    for(int k = i; i < j - 1; ++k) {
-                        q = m[i][k] + m[k + 1][j] + p_[i - 1] * p_[k] * p_[j];
+                    for(int k = i; k < j; ++k) {
+                        q = m[i][k] + m[k + 1][j] + p_[i] * p_[k + 1] * p_[j + 1];
                         if(q < m[i][j]) {
                             m[i][j] = q;
                             s[i][j] = k;
@@ -88,7 +113,9 @@ template <typename T> class MatrixChain final {
                 }
             }
             s.print();
-            print_optimal_order(s, 1, n);
+            m.print();
+            print_optimal_order(s, 0, n - 1);
+            std::cout << "best: " << m[0][n - 1];
         }
 
 };
