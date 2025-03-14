@@ -60,7 +60,8 @@ template <typename T> class MatrixChain final {
         void print_optimal_order(const Matrix<int>& s, int i, int j) const {
             if(i == s[i][j] && s[i][j] + 1 == j) {
                 std::cout << ((i < j) ? i : j);
-                std::cout << ((i < j) ? j : i);
+                // std::cout << ((i < j) ? j : i);
+                // std::cout << i;
                 return;
             }
             if(i == j) {
@@ -90,12 +91,12 @@ template <typename T> class MatrixChain final {
         #endif
 
 
-        void matrix_chain_order() const {
-            std::cout << buff_.size() << std::endl;
+        int matrix_chain_order() const {
+            // std::cout << buff_.size() << std::endl;
             Matrix<int> m = Matrix<int>::zeros(buff_.size(), buff_.size());
             Matrix<int> s = Matrix<int>::zeros(buff_.size(), buff_.size());
-            std::for_each(p_.begin(), p_.end(), [&](auto i){ std::cout << i << " ";});
-            std::cout << std::endl;
+            // std::for_each(p_.begin(), p_.end(), [&](auto i){ std::cout << i << " ";});
+            // std::cout << std::endl;
 
             int n = p_.size() - 1;
             int q = 0;
@@ -112,10 +113,12 @@ template <typename T> class MatrixChain final {
                     }
                 }
             }
-            s.print();
-            m.print();
             print_optimal_order(s, 0, n - 1);
-            std::cout << "best: " << m[0][n - 1];
+            return m[0][n - 1];
+        }
+
+        int naive_multiply_cost() const {
+            return p_[0] * std::inner_product(std::next(p_.begin()), std::prev(p_.end()), std::next(p_.begin(), 2), 0);
         }
 
 };

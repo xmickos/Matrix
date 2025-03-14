@@ -17,7 +17,7 @@ add_library(matrixlib
 )
 add_executable(matrix ${SRCS})
 add_executable(matrixtest include/matrix.hpp matrixtest.cc)
-add_executable(matrixchain ${SRCS} include/matrixchain.hpp)
+add_executable(matrixchain include/matrixchain.hpp matrixchain.cpp)
 
 target_link_libraries(matrix
     PRIVATE matrixlib
