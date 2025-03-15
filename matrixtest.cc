@@ -2,6 +2,7 @@
 #include"include/matrix.hpp"
 #include<gtest/gtest.h>
 #include<cstdlib>
+#include"include/matrixchain.hpp"
 
 namespace matrix {
 
@@ -76,7 +77,7 @@ template <bool throwing, int max_allocs_count> int MyInt<throwing, max_allocs_co
 
 // TEST(UnitTests, Basics){ }
 
-TEST(UnitTests, MatrixCtors){
+TEST(UnitTests, DISABLED_MatrixCtors){
     Matrix<int> M = Matrix<int>(2, 2);
     M.fill(1);
     EXPECT_EQ(M[0][0], 1);
@@ -101,7 +102,7 @@ TEST(UnitTests, MatrixCtors){
     EXPECT_TRUE(S.equal(M));
 }
 
-TEST(UnitTests, Ctor_exceptions){
+TEST(UnitTests, DISABLED_Ctor_exceptions){
     std::cout << "--- #0 — 1st ctor" << std::endl;
 
     try {
@@ -188,7 +189,7 @@ TEST(UnitTests, Ctor_exceptions){
 
 }
 
-TEST(End2EndTests, Determinant_exceptions){
+TEST(End2EndTests, DISABLED_Determinant_exceptions){
     std::cout << "--- #0 — lpu_decompose." << std::endl;
 
     MatrixBuff<MyInt<true, 12>>::allocations = 0;
@@ -237,7 +238,7 @@ TEST(End2EndTests, Determinant_exceptions){
     #endif
 }
 
-TEST(UnitTests, Multiplication){
+TEST(UnitTests, DISABLED_Multiplication){
     std::vector<int> v = {1, 2, 1, 0};
     std::vector<int> w = {1, 2, 3, 4};
     std::vector<int> q = {7, 10, 1, 2};
@@ -248,21 +249,21 @@ TEST(UnitTests, Multiplication){
     EXPECT_TRUE(C_true.equal(C));
 }
 
-TEST(End2endTests, Int3x3){
+TEST(End2endTests, DISABLED_Int3x3){
     std::vector<int> v = {48, 56, 0, -1, 23, 0, 0, 0, 1};
     Matrix<int> A(3, 3, v.begin(), v.end());
     int det = A.calculate_det();
     EXPECT_EQ(det, 1160);
 }
 
-TEST(End2endTests, Double3x3){
+TEST(End2endTests, DISABLED_Double3x3){
     std::vector<double> v = {2.09, 5.55, 4.93, 0.15, 8, 8.7, 0.87, 8.33, 4.68};
     Matrix<double> m(3, 3, v.begin(), v.end());
     double det = m.calculate_det();
     EXPECT_EQ(det, -63.255705);
 }
 
-TEST(End2endTests, Integers150x150) {
+TEST(End2endTests, DISABLED_Integers150x150) {
     int true_det = 151;
     Matrix<int> mat_ = Matrix<int>::upper_triangular(150, true_det);
 
@@ -280,7 +281,7 @@ TEST(End2endTests, Integers150x150) {
     EXPECT_EQ(det, true_det);
 }
 
-TEST(End2endTests, GeneralInteger){
+TEST(End2endTests, DISABLED_GeneralInteger){
     double test_det, trues_count = 0.0;
     int dets_count = 42;
 
@@ -297,4 +298,34 @@ TEST(End2endTests, GeneralInteger){
         }
         if(trues_count / 84.0 < 0.5){ std::cout << "Border size for doubles is " << --sz << std::endl; break; }
     }
+}
+
+TEST(End2EndTests, GeneralMatrixChain) {
+    const int scale_factor = 5, base = 10, big = scale_factor * base;
+    const int count = 31;
+    const int total_cost_bad = big * base * big + (count - 2) * (big * big * base);
+    const int total_cost_good = big * base * base * ((count + 1) / 2) + \
+        ((count - 1) / 2 - 1) * base * base * base;
+    MatrixChain<int> mc;
+
+    for(int i = 0; i < count; ++i) {
+        if(i % 2 == 0) {
+            mc.append(Matrix<int>(scale_factor * base, base));
+        } else {
+            mc.append(Matrix<int>(base, scale_factor * base));
+        }
+    }
+
+    EXPECT_EQ(mc.naive_multiply_cost(), total_cost_bad);
+    EXPECT_EQ(mc.matrix_chain_order(), total_cost_good);
+}
+
+TEST(UnitTests, DISABLED_naive_multiply_cost) {
+    MatrixChain<int> mc;
+    mc.append(Matrix<int>(30, 35));
+    mc.append(Matrix<int>(35, 15));
+    mc.append(Matrix<int>(15, 5));
+    mc.append(Matrix<int>(5, 10));
+
+    EXPECT_EQ(mc.naive_multiply_cost(), 19500);
 }

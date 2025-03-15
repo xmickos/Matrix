@@ -32,6 +32,7 @@ template <typename T> class MatrixChain final {
                 p_.push_back(rhs.rows());
             }
         }
+
         void append(const Matrix<T>& rhs) {
             buff_.push_back(rhs);
             if(p_.empty()) {
@@ -43,8 +44,12 @@ template <typename T> class MatrixChain final {
         }
 
         void print_content_sizes() const {
+            if(buff_.empty()) {
+                throw std::out_of_range("MatrixBuffer is empty.");
+            }
+
             const Matrix<T>& back_ = buff_.back();
-            std::for_each(buff_.begin(), std::next(buff_.end(), -1),
+            std::for_each(buff_.begin(), std::prev(buff_.end()),
                 [](auto it){ std::cout << "(" << it.cols() << ", " << it.rows() << "), ";}
             );
 
@@ -52,16 +57,19 @@ template <typename T> class MatrixChain final {
         }
 
         void print_content() const {
+            if(buff_.empty()) {
+                throw std::out_of_range("MatrixBuffer is empty.");
+            }
+
             std::for_each(buff_.begin(), buff_.end(),
                 [](auto it){ it.print(); std::cout << std::endl; }
             );
         }
 
+    private:
         void print_optimal_order(const Matrix<int>& s, int i, int j) const {
             if(i == s[i][j] && s[i][j] + 1 == j) {
                 std::cout << ((i < j) ? i : j);
-                // std::cout << ((i < j) ? j : i);
-                // std::cout << i;
                 return;
             }
             if(i == j) {
@@ -90,13 +98,19 @@ template <typename T> class MatrixChain final {
         }
         #endif
 
+    public:
+
+        int naive_multiply_cost() const {
+            if(p_.empty()) {
+                throw std::out_of_range("MatrixBuffer is empty");
+            }
+
+            return p_[0] * std::inner_product(std::next(p_.begin()), std::prev(p_.end()), std::next(p_.begin(), 2), 0);
+        }
 
         int matrix_chain_order() const {
-            // std::cout << buff_.size() << std::endl;
             Matrix<int> m = Matrix<int>::zeros(buff_.size(), buff_.size());
             Matrix<int> s = Matrix<int>::zeros(buff_.size(), buff_.size());
-            // std::for_each(p_.begin(), p_.end(), [&](auto i){ std::cout << i << " ";});
-            // std::cout << std::endl;
 
             int n = p_.size() - 1;
             int q = 0;
@@ -117,11 +131,6 @@ template <typename T> class MatrixChain final {
             return m[0][n - 1];
         }
 
-        int naive_multiply_cost() const {
-            return p_[0] * std::inner_product(std::next(p_.begin()), std::prev(p_.end()), std::next(p_.begin(), 2), 0);
-        }
-
 };
-
 
 }
