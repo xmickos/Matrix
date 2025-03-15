@@ -77,7 +77,7 @@ template <bool throwing, int max_allocs_count> int MyInt<throwing, max_allocs_co
 
 // TEST(UnitTests, Basics){ }
 
-TEST(UnitTests, DISABLED_MatrixCtors){
+TEST(UnitTests, MatrixCtors){
     Matrix<int> M = Matrix<int>(2, 2);
     M.fill(1);
     EXPECT_EQ(M[0][0], 1);
@@ -102,7 +102,7 @@ TEST(UnitTests, DISABLED_MatrixCtors){
     EXPECT_TRUE(S.equal(M));
 }
 
-TEST(UnitTests, DISABLED_Ctor_exceptions){
+TEST(UnitTests, Ctor_exceptions){
     std::cout << "--- #0 — 1st ctor" << std::endl;
 
     try {
@@ -189,7 +189,7 @@ TEST(UnitTests, DISABLED_Ctor_exceptions){
 
 }
 
-TEST(End2EndTests, DISABLED_Determinant_exceptions){
+TEST(End2EndTests, Determinant_exceptions){
     std::cout << "--- #0 — lpu_decompose." << std::endl;
 
     MatrixBuff<MyInt<true, 12>>::allocations = 0;
@@ -238,7 +238,7 @@ TEST(End2EndTests, DISABLED_Determinant_exceptions){
     #endif
 }
 
-TEST(UnitTests, DISABLED_Multiplication){
+TEST(UnitTests, Multiplication){
     std::vector<int> v = {1, 2, 1, 0};
     std::vector<int> w = {1, 2, 3, 4};
     std::vector<int> q = {7, 10, 1, 2};
@@ -249,21 +249,21 @@ TEST(UnitTests, DISABLED_Multiplication){
     EXPECT_TRUE(C_true.equal(C));
 }
 
-TEST(End2endTests, DISABLED_Int3x3){
+TEST(End2endTests, Int3x3){
     std::vector<int> v = {48, 56, 0, -1, 23, 0, 0, 0, 1};
     Matrix<int> A(3, 3, v.begin(), v.end());
     int det = A.calculate_det();
     EXPECT_EQ(det, 1160);
 }
 
-TEST(End2endTests, DISABLED_Double3x3){
+TEST(End2endTests, Double3x3){
     std::vector<double> v = {2.09, 5.55, 4.93, 0.15, 8, 8.7, 0.87, 8.33, 4.68};
     Matrix<double> m(3, 3, v.begin(), v.end());
     double det = m.calculate_det();
     EXPECT_EQ(det, -63.255705);
 }
 
-TEST(End2endTests, DISABLED_Integers150x150) {
+TEST(End2endTests, Integers150x150) {
     int true_det = 151;
     Matrix<int> mat_ = Matrix<int>::upper_triangular(150, true_det);
 
@@ -281,7 +281,7 @@ TEST(End2endTests, DISABLED_Integers150x150) {
     EXPECT_EQ(det, true_det);
 }
 
-TEST(End2endTests, DISABLED_GeneralInteger){
+TEST(End2endTests, GeneralInteger){
     double test_det, trues_count = 0.0;
     int dets_count = 42;
 
@@ -320,7 +320,7 @@ TEST(End2EndTests, GeneralMatrixChain) {
     EXPECT_EQ(mc.matrix_chain_order(), total_cost_good);
 }
 
-TEST(UnitTests, DISABLED_naive_multiply_cost) {
+TEST(UnitTests, naive_multiply_cost) {
     MatrixChain<int> mc;
     mc.append(Matrix<int>(30, 35));
     mc.append(Matrix<int>(35, 15));
