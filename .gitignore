@@ -6,3 +6,4 @@ matrix
 *.dSYM/
 build/
 netlibfiles.zip
+_deps/

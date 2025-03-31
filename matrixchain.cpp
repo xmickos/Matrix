@@ -10,13 +10,12 @@ int main(int argc, char** argv) {
     MatrixChain<int> mc;
     std::cin >> count >> cols >> rows;
     mc.append(Matrix<int>(cols, rows));
-    for(int i = 0; i < count - 1; ++i) {
+    for(int i = 0; i < count - 2; ++i) {
         cols = rows;
         std::cin >> rows;
         mc.append(Matrix<int>(cols, rows));
     }
 
-    std::cout << std::endl;
     std::cout << mc.naive_multiply_cost() / mc.matrix_chain_order();
 
     return 0;

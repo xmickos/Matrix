@@ -303,7 +303,7 @@ TEST(End2endTests, GeneralInteger){
 TEST(End2EndTests, GeneralMatrixChain) {
     const int scale_factor = 5, base = 10, big = scale_factor * base;
     const int count = 31;
-    const int total_cost_bad = big * base * big + (count - 2) * (big * big * base);
+    const int total_cost_bad = (count - 1) * (big * big * base);
     const int total_cost_good = big * base * base * ((count + 1) / 2) + \
         ((count - 1) / 2 - 1) * base * base * base;
     MatrixChain<int> mc;

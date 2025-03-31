@@ -128,6 +128,8 @@ template <typename T> class MatrixChain final {
                 }
             }
             print_optimal_order(s, 0, n - 1);
+            std::cout << std::endl;
+
             return m[0][n - 1];
         }
 
