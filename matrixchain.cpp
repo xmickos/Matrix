@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
         mc.append(Matrix<int>(cols, rows));
     }
 
-    std::cout << mc.naive_multiply_cost() / mc.matrix_chain_order();
+    std::cout << mc.naive_multiply_cost() / static_cast<double>(mc.matrix_chain_order());
 
     return 0;
 }
