@@ -66,14 +66,15 @@ template <typename T> class MatrixChain final {
             );
         }
 
+    #if 0
     private:
         void print_optimal_order(const Matrix<int>& s, int i, int j) const {
             if(i == s[i][j] && s[i][j] + 1 == j) {
-                std::cout << ((i < j) ? i : j);
+                std::cout << ((i < j) ? i : j) << " ";
                 return;
             }
             if(i == j) {
-                std::cout << i;
+                std::cout << i << " ";
             } else {
                 if(i < s[i][j]) {
                     print_optimal_order(s, i, s[i][j]);
@@ -84,33 +85,43 @@ template <typename T> class MatrixChain final {
                 }
             }
         }
+    #endif
 
-        #if 0
-        void print_optimal_order(const Matrix<int>& s, int i, int j) const {
+        void enumerate_optimal_order(Matrix<std::pair<int, int>>& s, int i, int j, int& counter) const {
             if(i == j) {
-                std::cout << i;
+                return;
             } else {
-                std::cout << "(";
-                print_optimal_order(s, i, s[i][j]);
-                print_optimal_order(s, s[i][j] + 1, j);
-                std::cout << ")";
+                enumerate_optimal_order(s, i, s[i][j].first, counter);
+                enumerate_optimal_order(s, s[i][j].first + 1, j, counter);
+                s[i][j].second = counter;
+                counter++;
             }
         }
-        #endif
+
+        void print_optimal_order(const Matrix<std::pair<int, int>>& s, int i, int j) const {
+            if(i == j) {
+                return;
+            } else {
+                print_optimal_order(s, i, s[i][j].first);
+                if(s[i][j].second != -1) { std::cout << s[i][j].second << " "; }
+                print_optimal_order(s, s[i][j].first + 1, j);
+            }
+        }
 
     public:
 
-        int naive_multiply_cost() const {
+        long long naive_multiply_cost() const {
             if(p_.empty()) {
                 throw std::out_of_range("MatrixBuffer is empty");
             }
 
-            return p_[0] * std::inner_product(std::next(p_.begin()), std::prev(p_.end()), std::next(p_.begin(), 2), 0);
+            return p_[0] * std::inner_product(std::next(p_.begin()), std::prev(p_.end()), std::next(p_.begin(), 2), 0LL);
         }
 
         int matrix_chain_order() const {
             Matrix<int> m = Matrix<int>::zeros(buff_.size(), buff_.size());
-            Matrix<int> s = Matrix<int>::zeros(buff_.size(), buff_.size());
+            Matrix<std::pair<int, int>> s = Matrix<std::pair<int, int>>::zeros(buff_.size(), buff_.size());
+            int counter = 0;
 
             int n = p_.size() - 1;
             int q = 0;
@@ -122,11 +133,12 @@ template <typename T> class MatrixChain final {
                         q = m[i][k] + m[k + 1][j] + p_[i] * p_[k + 1] * p_[j + 1];
                         if(q < m[i][j]) {
                             m[i][j] = q;
-                            s[i][j] = k;
+                            s[i][j].first = k;
                         }
                     }
                 }
             }
+            enumerate_optimal_order(s, 0, n - 1, counter);
             print_optimal_order(s, 0, n - 1);
             std::cout << std::endl;
 

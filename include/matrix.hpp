@@ -203,7 +203,7 @@ namespace matrix {
                 std::swap(*this, tmp);
             }
 
-            static Matrix zeros(int cols_, int rows_) { return Matrix<T>(cols_, rows_, static_cast<T>(0)); }
+            static Matrix zeros(int cols_, int rows_) { return Matrix<T>(cols_, rows_, T{}); }
 
             template<typename Iterator> Matrix(int cls, int rws, Iterator it, Iterator et) : MatrixBuff<T>(cls, rws) {
                 Matrix<T> tmp(cls, rws);
