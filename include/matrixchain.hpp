@@ -118,13 +118,13 @@ template <typename T> class MatrixChain final {
             return p_[0] * std::inner_product(std::next(p_.begin()), std::prev(p_.end()), std::next(p_.begin(), 2), 0LL);
         }
 
-        int matrix_chain_order() const {
-            Matrix<int> m = Matrix<int>::zeros(buff_.size(), buff_.size());
+        long long matrix_chain_order() const {
+            Matrix<long long> m = Matrix<long long>::zeros(buff_.size(), buff_.size());
             Matrix<std::pair<int, int>> s = Matrix<std::pair<int, int>>::zeros(buff_.size(), buff_.size());
             int counter = 0;
 
             int n = p_.size() - 1;
-            int q = 0;
+            long long q = 0;
             for(int l = 2; l <= n; ++l) {
                 for(int i = 0; i < n - l + 1; ++i) {
                     int j = i + l - 1;
