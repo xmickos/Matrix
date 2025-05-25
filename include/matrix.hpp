@@ -175,7 +175,7 @@ namespace matrix {
                 return m;
             }
 
-            void print() const noexcept {
+            void print() const {
                 std::cout << "cols_ = " << cols_ << ", rows_ = " << rows_ << std::endl;
                 for(int i = 0; i < cols_; ++i){
                     for(int j = 0; j < rows_; ++j){

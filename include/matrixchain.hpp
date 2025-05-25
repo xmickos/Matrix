@@ -87,24 +87,13 @@ template <typename T> class MatrixChain final {
         }
     #endif
 
-        void enumerate_optimal_order(Matrix<std::pair<int, int>>& s, int i, int j, int& counter) const {
+        void enumerate_optimal_order(Matrix<int>& s, int i, int j, std::vector<int>& order, int& counter) const {
             if(i == j) {
                 return;
             } else {
-                enumerate_optimal_order(s, i, s[i][j].first, counter);
-                enumerate_optimal_order(s, s[i][j].first + 1, j, counter);
-                s[i][j].second = counter;
-                counter++;
-            }
-        }
-
-        void print_optimal_order(const Matrix<std::pair<int, int>>& s, int i, int j) const {
-            if(i == j) {
-                return;
-            } else {
-                print_optimal_order(s, i, s[i][j].first);
-                if(s[i][j].second != -1) { std::cout << s[i][j].second << " "; }
-                print_optimal_order(s, s[i][j].first + 1, j);
+                enumerate_optimal_order(s, i, s[i][j], order, counter);
+                enumerate_optimal_order(s, s[i][j] + 1, j, order, counter);
+                order[counter++] = s[i][j];
             }
         }
 
@@ -120,7 +109,7 @@ template <typename T> class MatrixChain final {
 
         long long matrix_chain_order() const {
             Matrix<long long> m = Matrix<long long>::zeros(buff_.size(), buff_.size());
-            Matrix<std::pair<int, int>> s = Matrix<std::pair<int, int>>::zeros(buff_.size(), buff_.size());
+            Matrix<int> s = Matrix<int>::zeros(buff_.size(), buff_.size());
             int counter = 0;
 
             int n = p_.size() - 1;
@@ -133,13 +122,14 @@ template <typename T> class MatrixChain final {
                         q = m[i][k] + m[k + 1][j] + p_[i] * p_[k + 1] * p_[j + 1];
                         if(q < m[i][j]) {
                             m[i][j] = q;
-                            s[i][j].first = k;
+                            s[i][j] = k;
                         }
                     }
                 }
             }
-            enumerate_optimal_order(s, 0, n - 1, counter);
-            print_optimal_order(s, 0, n - 1);
+            std::vector<int> order(n - 1);
+            enumerate_optimal_order(s, 0, n - 1, order, counter);
+            std::for_each(order.begin(), order.end(), [&](auto t){ std::cout << t << " "; });
             std::cout << std::endl;
 
             return m[0][n - 1];
